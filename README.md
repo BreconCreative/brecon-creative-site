@@ -12,23 +12,25 @@ The site-wide JavaScript for breconcreative.com (Webflow, Lumos, Barba page tran
 Webflow > Site settings > Custom code > Head code, after the line that loads the libraries:
 
 ```html
-<script defer src="https://cdn.jsdelivr.net/gh/BreconCreative/brecon-creative-site@v1.0.0/dist/brecon-site.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/gh/BreconCreative/brecon-creative-site@COMMIT_ID/dist/brecon-site.min.js"></script>
 ```
+
+`COMMIT_ID` is the full ID of the commit being released (40 characters, shown on GitHub under each commit). A commit ID can never change, so a pinned link always serves exactly the same file.
 
 The libraries it needs (Barba, Lenis, GSAP with CustomEase and ScrollTrigger) load in the line above it, as one combined request.
 
 ## Releasing a change
 
 1. Edit `src/brecon-site.js` and rebuild `dist/brecon-site.min.js`.
-2. Commit and tag a new version, for example `v1.0.1`.
-3. In Webflow, change the version number in the script link and publish to staging.
+2. Commit and push.
+3. In Webflow, swap the commit ID in the script link for the new one and publish to staging.
 4. Test on staging. Publish to the live domain only once it is right.
 
-The live site only changes when the version number in Webflow changes, so committing here never breaks the live site.
+The live site only changes when the commit ID in Webflow changes, so committing here never breaks the live site.
 
 ## Rolling back
 
-Change the version number in Webflow back to the last good release and publish.
+Put the previous commit ID back in the Webflow script link and publish. The commit history on GitHub lists every release.
 
 ## Rules
 
