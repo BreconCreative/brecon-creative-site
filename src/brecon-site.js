@@ -16,6 +16,10 @@
 function run() {
 if (!window.gsap || !window.barba) return;
 
+// Tells the head code the script is running, so content it hides until
+// its entrance animation stays hidden. If this never runs, it shows.
+window.bcSiteReady = true;
+
 gsap.registerPlugin(CustomEase);
 const hasScrollTrigger = typeof window.ScrollTrigger !== "undefined";
 if (hasScrollTrigger) gsap.registerPlugin(ScrollTrigger);
