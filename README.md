@@ -6,6 +6,7 @@ The site-wide JavaScript for breconcreative.com (Webflow, Lumos, Barba page tran
 
 - `src/brecon-site.js` is the readable version. Make changes here.
 - `dist/brecon-site.min.js` is the compressed version the website loads. It is rebuilt from `src` for every release.
+- `webflow/head.html` and `webflow/footer.html` are copies of the site-wide custom code in Webflow, kept for history. The site does not load them. Webflow holds the live version: update the copy here whenever it changes.
 
 ## How the website loads it
 
@@ -31,6 +32,10 @@ The live site only changes when the commit ID in Webflow changes, so committing 
 ## Rolling back
 
 Put the previous commit ID back in the Webflow script link and publish. The commit history on GitHub lists every release.
+
+## Why the head code stays in Webflow
+
+It has to arrive inside the page. The early script and the critical styles (no white flash between pages, intro text hidden until it animates in) would flash or hold up the first paint if they loaded as separate files. The Button Roll styles are shared by several components (nav, hero, footer), so they live there once rather than in every component.
 
 ## Rules
 
