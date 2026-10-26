@@ -41,6 +41,10 @@ rmMQ.addEventListener?.("change", e => (reducedMotion = e.matches));
 
 const fineMQ = window.matchMedia("(hover: hover) and (pointer: fine)");
 const has = (s) => !!nextPage.querySelector(s);
+// A script hook can sit on a link, or on a component (Button Roll) that
+// holds its link or button inside. This finds the real link either way.
+const linkIn = (el) => (el.matches("a[href]") ? el : el.querySelector("a[href]"));
+const magneticSel = '[data-magnetic]:not([data-magnetic="false"])';
 const isMobile = () => window.innerWidth < 768;
 
 CustomEase.create("osmo", "0.625, 0.05, 0, 1");
@@ -77,7 +81,7 @@ function initBeforeEnterFunctions(next) {
 function initAfterEnterFunctions(next) {
   nextPage = next || document;
   if (has("[data-card-spot]")) initCardSpot(nextPage);
-  if (has("[data-magnetic]")) initMagnetic(nextPage);
+  if (has(magneticSel)) initMagnetic(nextPage);
   if (has("[data-copy-email]")) initCopyEmail(nextPage);
   if (has("[data-count-up]")) initCountUp(nextPage);
   if (has("[data-projects-rail]")) initRail(nextPage);
@@ -385,13 +389,20 @@ function initBarbaNavUpdate(data) {
   tpl.innerHTML = data.next.html.trim();
   const nextNodes = tpl.content.querySelectorAll("[data-barba-update]");
   const currentNodes = document.querySelectorAll("[data-nav-main] [data-barba-update]");
-  currentNodes.forEach((curr, i) => {
-    const next = nextNodes[i];
-    if (!next) return;
+  const sync = (curr, next) => {
     const status = next.getAttribute("aria-current");
     if (status !== null) curr.setAttribute("aria-current", status);
     else curr.removeAttribute("aria-current");
     curr.setAttribute("class", next.getAttribute("class") || "");
+  };
+  currentNodes.forEach((curr, i) => {
+    const next = nextNodes[i];
+    if (!next) return;
+    sync(curr, next);
+    // Component buttons keep their link inside, so update that too
+    const currLinks = curr.querySelectorAll("a");
+    const nextLinks = next.querySelectorAll("a");
+    currLinks.forEach((a, n) => { if (nextLinks[n]) sync(a, nextLinks[n]); });
   });
 }
 
@@ -497,7 +508,7 @@ function initCardSpot(scope) {
 // Magnetic call to action
 function initMagnetic(scope) {
   if (!fineMQ.matches || reducedMotion) return;
-  scope.querySelectorAll("[data-magnetic]").forEach(el => {
+  scope.querySelectorAll(magneticSel).forEach(el => {
     if (el.dataset.scriptInitialized) return;
     el.dataset.scriptInitialized = "true";
     el.addEventListener("pointermove", e => {
@@ -656,9 +667,12 @@ function initCase(scope) {
   window.__caseSeamless = false;
 
   // Live site button only when there is a URL
-  scope.querySelectorAll("[data-site-link]").forEach(a => {
-    const h = (a.getAttribute("href") || "").trim();
-    if (!h || h === "#") { (a.parentElement || a).style.display = "none"; return; }
+  scope.querySelectorAll("[data-site-link]").forEach(el => {
+    const a = linkIn(el);
+    const h = a ? (a.getAttribute("href") || "").trim() : "";
+    // A plain link hides its wrapper, a component hides itself
+    const box = el.matches("a") ? (el.parentElement || el) : el;
+    if (!h || h === "#") { box.style.display = "none"; return; }
     a.setAttribute("target", "_blank");
     a.setAttribute("rel", "noopener");
   });
@@ -818,11 +832,12 @@ function initContact(scope) {
   }
 
   // Smooth scroll to the booking calendar
-  scope.querySelectorAll("[data-contact-book]").forEach(a => {
-    if (a.dataset.scriptInitialized) return;
-    a.dataset.scriptInitialized = "true";
-    a.addEventListener("click", e => {
-      const id = (a.getAttribute("href") || "").split("#")[1];
+  scope.querySelectorAll("[data-contact-book]").forEach(el => {
+    if (el.dataset.scriptInitialized) return;
+    el.dataset.scriptInitialized = "true";
+    el.addEventListener("click", e => {
+      const a = linkIn(el);
+      const id = a ? (a.getAttribute("href") || "").split("#")[1] : "";
       const target = id && (scope.querySelector("#" + id) || document.getElementById(id));
       if (!target) return;
       e.preventDefault();
@@ -953,11 +968,14 @@ function initContact(scope) {
     const next = () => { if (valid(steps[current]) && current < total - 1) show(current + 1, true); };
     const back = () => { if (current > 0) show(current - 1, true); };
 
-    // Next and Back are links with role="button": no jump to the top, and
-    // Space works as it does on a real button
+    // Next and Back: a real button inside a Button Roll component, or a link
+    // with role="button". No jump to the top, and Space works on the link
+    // as it does on a real button (a real button handles Space itself).
     const asButton = (b, fn) => {
       b.addEventListener("click", e => { e.preventDefault(); fn(); });
-      b.addEventListener("keydown", e => { if (e.key === " ") { e.preventDefault(); fn(); } });
+      b.addEventListener("keydown", e => {
+        if (e.key === " " && !e.target.closest("button")) { e.preventDefault(); fn(); }
+      });
     };
     form.querySelectorAll("[data-brief-next]").forEach(b => asButton(b, next));
     form.querySelectorAll("[data-brief-back]").forEach(b => asButton(b, back));
@@ -988,12 +1006,31 @@ function initContact(scope) {
       });
       if (i !== -1) { e.preventDefault(); e.stopImmediatePropagation(); show(i, true); valid(steps[i]); return; }
       updateSummary();
+      sendLabel("Sending");
       const date = brief.querySelector("[data-brief-reply]");
       if (date) date.textContent = nextWorkingDay();
       const nameEl = brief.querySelector("[data-brief-name]");
       const first = value("Name").split(" ")[0];
       if (nameEl) nameEl.textContent = first ? ", " + first : "";
     }, true);
+
+    // The send button (a Button Roll) says Sending while the brief goes, and
+    // goes back to its own label if Webflow shows the error message
+    const sendLabel = text => {
+      form.querySelectorAll('[type="submit"]').forEach(b => {
+        const box = b.closest(".button-roll_wrap");
+        if (!box) return;
+        box.querySelectorAll(".button-roll_text").forEach(t => {
+          if (!t.dataset.label) t.dataset.label = t.textContent;
+          t.textContent = text || t.dataset.label;
+        });
+      });
+    };
+    const fail = brief.querySelector(".w-form-fail");
+    if (fail && "MutationObserver" in window) {
+      new MutationObserver(() => { if (getComputedStyle(fail).display !== "none") sendLabel(""); })
+        .observe(fail, { attributes: true, attributeFilter: ["style"] });
+    }
 
     // Sent: Webflow shows the success block, the card settles
     if (done && "MutationObserver" in window) {
