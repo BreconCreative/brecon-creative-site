@@ -44,7 +44,8 @@ const has = (s) => !!nextPage.querySelector(s);
 // A script hook can sit on a link, or on a component (Button Roll) that
 // holds its link or button inside. This finds the real link either way.
 const linkIn = (el) => (el.matches("a[href]") ? el : el.querySelector("a[href]"));
-const magneticSel = '[data-magnetic]:not([data-magnetic="false"])';
+// Webflow writes component switches as "True" / "False", so match either case
+const magneticSel = '[data-magnetic]:not([data-magnetic="false" i])';
 const isMobile = () => window.innerWidth < 768;
 
 CustomEase.create("osmo", "0.625, 0.05, 0, 1");
