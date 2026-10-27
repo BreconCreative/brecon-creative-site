@@ -77,6 +77,7 @@ function initBeforeEnterFunctions(next) {
   if (has("[data-card-spot][data-accent], [data-project-slug]")) initProjectCards(nextPage);
   if (has("[data-price]")) initPricing(nextPage);
   if (has("[data-faq-order]")) initFaqOrder(nextPage);
+  if (has("[data-journal-slug], [data-date-format]")) initJournal(nextPage);
   if (has("[data-reveal]")) initReveal(nextPage);
 }
 
@@ -1428,6 +1429,43 @@ function initFaqOrder(scope) {
 // Accordions: native <details> tagged data-accordion open and close with a
 // smooth height animation instead of snapping. Keyboard, find-in-page and
 // no-JavaScript behaviour stay native. Reduced motion keeps the snap.
+// -----------------------------------------
+// JOURNAL
+// Webflow's API can't set "current item" links, so cards carry the article
+// slug and get their link here, the same way project cards do. "More from
+// the journal" hides the article you're reading and shows three. Dates
+// tagged data-date-format="uk" read 27 October 2026. Runs before the page is
+// shown, so nothing changes in front of anyone.
+// -----------------------------------------
+function initJournal(scope) {
+  scope.querySelectorAll("a[data-journal-slug]").forEach(link => {
+    const slug = (link.getAttribute("data-journal-slug") || "").trim();
+    if (/^[a-z0-9-]+$/i.test(slug)) link.setAttribute("href", "/journal/" + slug);
+  });
+
+  scope.querySelectorAll("[data-date-format='uk']").forEach(el => {
+    if (el.dataset.dateFormatted) return;
+    const d = new Date(el.textContent.trim());
+    if (isNaN(d)) return;
+    el.dataset.dateFormatted = "true";
+    el.textContent = d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+  });
+
+  const more = scope.querySelector("[data-journal-more]");
+  if (more) {
+    const holder = scope.querySelector("[data-journal-current]");
+    const current = holder ? (holder.getAttribute("data-journal-current") || "").trim() : "";
+    let shown = 0;
+    more.querySelectorAll(".journal_item").forEach(item => {
+      const link = item.querySelector("[data-journal-slug]");
+      const slug = link ? link.getAttribute("data-journal-slug").trim() : "";
+      const hide = (current && slug === current) || shown >= 3;
+      item.style.display = hide ? "none" : "flex"; // inline, so it wins over the stylesheet
+      if (!hide) shown++;
+    });
+  }
+}
+
 // -----------------------------------------
 // 404 | THE KITE TOOK IT
 // "Another excuse" cycles through excuses in a shuffled order, never the same
