@@ -267,6 +267,114 @@ function buildTransitionKite(next, dur) {
   return api;
 }
 
+// -----------------------------------------
+// FIRST VISIT INTRO
+// The logo animation plays once, on someone's first visit, then never again.
+// The head code adds html.bc-intro before first paint (only when this
+// browser has no record of a visit and motion is allowed), which covers the
+// page in Midnight so nothing flashes. This builds the intro over that cover,
+// plays it, then lifts it away with the kite's wing curve on its lower edge.
+// Any click, key, scroll or touch skips straight to the lift.
+// -----------------------------------------
+const LOGO_LETTERS = ["M162.79,53.52c3.96-1.85,6.65-5.52,6.65-9.73,0-6.26-5.91-11.24-12.99-11.01v-.02h-21.33c1.74,4.72,2.72,11.26,2.94,18.03l2.98,2.98-2.98,2.97c-.22,6.77-1.2,13.3-2.94,18.02h21.33v-.05c7.76.62,14.7-4.36,14.7-10.97,0-4.62-3.45-8.58-8.36-10.22ZM146.48,45.01c.11-5.26.69-9.54,2.99-10.16h4.31c4.04,0,7.31,4,7.31,8.93s-3.27,8.94-7.31,8.94h-7.3v-7.71ZM154.64,72.67h-8.16v-17.87h8.16c4.51,0,8.16,4,8.16,8.94s-3.65,8.93-8.16,8.93Z", "M214.24,74.77c-3.56-3.4-5.93-6.13-8.37-9.37l-7.56-10.58h.76c6.92,0,12.52-4.94,12.52-11.02.01-6.1-5.6-11.04-12.52-11.04h-23.51c3.99,10.82,3.99,31.18,0,42h14.34c-1.74-4.75-2.89-11.9-2.98-19.95h3.38l2.61,4.34c2.83,5.26,5.2,11.82,3.79,15.62h17.54ZM195.93,52.72h-9.02v-7.71c.12-5.26.69-9.54,2.99-10.15h6.03c4.03,0,7.31,4,7.31,8.93s-3.27,8.93-7.31,8.93Z", "M231.51,72.65c-1.35-4.64-2.21-10.9-2.29-17.84,6.82.05,12.82.52,16.93,4.63v-11.36c-4.12,4.12-10.12,4.59-16.94,4.63v-17.86h1.3c8.48,0,16.02,4.45,18.56,13.94l2.45-16.03h-33.66c3.99,10.82,3.99,31.18,0,42h33.65l-2.44-16.03c-2.45,9.12-9.49,13.58-17.56,13.92Z", "M267.04,37.38c8.35-4.82,18.14,5.74,21.49,12.84v-14.34c-2.84-1.99-7.58-3.12-12.05-3.12-11.6,0-21,9.4-21,21s9.41,21,21,21c5.01,0,10.68-1.82,12.05-6.91-.71.92-1.57,1.7-2.59,2.29-6.04,3.49-15.18-1.01-20.4-10.06-5.22-9.04-4.55-19.2,1.5-22.7Z", "M311.28,32.76c-11.59,0-21,9.4-21,21s9.41,21,21,21,21-9.4,21-21-9.4-21-21-21ZM320.74,70.14c-6.05,3.49-15.18-1.01-20.4-10.06-5.22-9.04-4.56-19.2,1.49-22.7,6.04-3.49,15.18,1.02,20.4,10.07,5.22,9.04,4.55,19.2-1.49,22.69Z", "M369.19,49.91c.03-6.91.47-12.99,4.63-17.15h-11.36c4.16,4.16,4.59,10.24,4.63,17.14v7.71c-.02,4.12-.19,7.95-1.2,11.25l-8.42-15.1c-5.19-10.16-8.77-16.2-8.77-21h-17.14c4.16,4.16,4.6,10.24,4.63,17.14v7.71c-.03,6.91-.47,12.99-4.63,17.14h11.36c-4.16-4.15-4.6-10.24-4.63-17.14v-7.7c.02-4.12.19-7.95,1.2-11.24l8.42,15.1c5.2,10.16,8.77,16.19,8.77,21h17.14c-4.15-4.16-4.6-10.24-4.63-17.14v-7.72Z"];
+const KITE_CURVE_DOWN = "M0,0 C116,37 347,143 500,143 C653,143 884,37 1000,0 Z";
+
+function initFirstVisitIntro() {
+  const html = document.documentElement;
+  if (!html.classList.contains("bc-intro")) return;
+  window.bcIntroStarted = true;
+  try { localStorage.setItem("bc-intro-seen", "1"); } catch (e) {}
+  if (inWebflowEditor() || reducedMotion) { html.classList.remove("bc-intro"); return; }
+
+  const css = document.createElement("style");
+  css.textContent =
+    ".bc-intro_wrap{position:fixed;inset:0;z-index:2147483001;pointer-events:auto;background:var(--swatch--dark-900,#0a0e22);display:flex;align-items:center;justify-content:center}" +
+    ".bc-intro_wrap::before{content:\"\";position:absolute;inset:0;background:radial-gradient(55% 50% at 88% 72%,color-mix(in srgb,var(--swatch--brand-500,#ff6a3d) 22%,transparent),transparent 75%),radial-gradient(50% 45% at 6% 6%,color-mix(in srgb,var(--swatch--violet,#7b5cd6) 14%,transparent),transparent 72%)}" +
+    ".bc-intro_svg{position:relative;width:min(70vw,34rem);height:auto;overflow:visible}" +
+    ".bc-intro_cap{position:absolute;left:0;top:100%;width:100%;display:block;margin-top:-1px;fill:var(--swatch--dark-900,#0a0e22)}" +
+    ".bc-intro_letter{fill:var(--swatch--light-200,#f2f1ec)}.bc-intro_kite{fill:var(--swatch--brand-500,#ff6a3d)}";
+  document.head.appendChild(css);
+
+  const capH = Math.round(window.innerWidth * 0.143);
+  const wrap = document.createElement("div");
+  wrap.className = "bc-intro_wrap";
+  wrap.setAttribute("aria-hidden", "true");
+  wrap.innerHTML =
+    '<svg class="bc-intro_svg" viewBox="105 20 280 67" focusable="false">' +
+    '<defs><linearGradient id="bc-intro-grad" gradientUnits="userSpaceOnUse" x1="94" y1="0" x2="112" y2="0"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient>' +
+    '<mask id="bc-intro-mask" maskUnits="userSpaceOnUse" x="100" y="20" width="300" height="70"><rect x="100" y="20" width="300" height="70" fill="url(#bc-intro-grad)"/></mask></defs>' +
+    '<g mask="url(#bc-intro-mask)">' + LOGO_LETTERS.map(d => '<path class="bc-intro_letter" d="' + d + '"/>').join("") + "</g>" +
+    '<g class="bc-intro_bird"><g class="bc-intro_bob"><g class="bc-intro_tail"><path class="bc-intro_kite" d="' + KITE_TAIL + '"/></g><path class="bc-intro_wing bc-intro_kite" d="' + KITE_WING + '"/></g></g></svg>' +
+    '<svg class="bc-intro_cap" viewBox="0 0 1000 143" preserveAspectRatio="none" focusable="false" style="height:' + capH + 'px"><path d="' + KITE_CURVE_DOWN + '"/></svg>';
+  document.body.appendChild(wrap);
+  html.classList.remove("bc-intro");
+  if (lenis && typeof lenis.stop === "function") lenis.stop();
+
+  const bird = wrap.querySelector(".bc-intro_bird");
+  const bob = wrap.querySelector(".bc-intro_bob");
+  const wing = wrap.querySelector(".bc-intro_wing");
+  const tail = wrap.querySelector(".bc-intro_tail");
+  const letters = wrap.querySelectorAll(".bc-intro_letter");
+  const grad = wrap.querySelector("#bc-intro-grad");
+  const cap = wrap.querySelector(".bc-intro_cap");
+
+  CustomEase.create("retreat", "0.65, 0, 0.35, 1");
+  CustomEase.create("unveil", "0.45, 0, 0.15, 1");
+  const HOME_X = 126, HOME_Y = 53.5, HERO = 2.6;
+  gsap.set(bird, { svgOrigin: HOME_X + " " + HOME_Y, x: 245 - HOME_X, scale: HERO * 0.86, opacity: 0, filter: "blur(6px)" });
+  gsap.set(wing, { transformOrigin: "50% 50%", scaleY: 0.1 });
+  gsap.set(tail, { svgOrigin: "120.6 53.4" });
+  gsap.set(letters, { x: -10 });
+  gsap.set(cap, { scaleY: 0, transformOrigin: "50% 0%" });
+
+  const tl = gsap.timeline({ onComplete: finish });
+  const beat = (t, s, k) => {
+    tl.to(wing, { scaleY: 1 - 0.6 * s, scaleX: 1 + 0.1 * s, duration: 0.17 * k, ease: "power2.in" }, t);
+    tl.to(wing, { scaleY: 1 + 0.06 * s, scaleX: 0.99, duration: 0.24 * k, ease: "power2.out" }, t + 0.17 * k);
+    tl.to(wing, { scaleY: 1, scaleX: 1, duration: 0.26 * k, ease: "sine.inOut" }, t + 0.41 * k);
+    tl.to(bob, { y: -2.2 * s, duration: 0.26 * k, ease: "power2.out" }, t + 0.1 * k);
+    tl.to(bob, { y: 0, duration: 0.42 * k, ease: "sine.inOut" }, t + 0.36 * k);
+  };
+  // Alone in the centre
+  tl.to(bird, { opacity: 1, duration: 0.5, ease: "sine.out" }, 0.15);
+  tl.to(bird, { filter: "blur(0px)", duration: 0.6, ease: "power2.out" }, 0.15);
+  tl.to(bird, { scale: HERO, duration: 1.2, ease: "expo.out" }, 0.15);
+  tl.to(wing, { scaleY: 1, duration: 0.7, ease: "back.out(1.3)" }, 0.3);
+  beat(0.75, 0.8, 1.1);
+  beat(1.45, 0.8, 1.1);
+  // Back to its place by the B
+  tl.to(bird, { x: 0, scale: 1, duration: 0.95, ease: "retreat" }, 2.05);
+  beat(2.92, 0.45, 1);
+  tl.to(tail, { keyframes: [
+    { rotation: -16, duration: 0.16, ease: "power2.out" },
+    { rotation: 7, duration: 0.18, ease: "sine.inOut" },
+    { rotation: 0, duration: 0.32, ease: "back.out(2)" }
+  ] }, 2.98);
+  // The landing beat pushes the name out
+  tl.to(grad, { attr: { x1: 380, x2: 398 }, duration: 0.95, ease: "unveil" }, 2.8);
+  tl.to(letters, { x: 0, duration: 1.0, ease: "power3.out", stagger: 0.035 }, 2.85);
+  // Lift away on the wing curve
+  tl.addLabel("exit", 4.0);
+  tl.to(cap, { scaleY: 1, duration: 0.35, ease: "power2.out" }, "exit");
+  tl.to(wrap, { y: -(window.innerHeight + capH), duration: 1.0, ease: "parallax" }, "exit");
+
+  const skip = () => {
+    off();
+    if (tl.time() < tl.labels.exit) tl.seek("exit");
+  };
+  const evs = ["pointerdown", "keydown", "wheel", "touchstart"];
+  const off = () => evs.forEach(e => window.removeEventListener(e, skip, true));
+  evs.forEach(e => window.addEventListener(e, skip, { capture: true, passive: true }));
+
+  function finish() {
+    off();
+    wrap.remove();
+    css.remove();
+    if (lenis && typeof lenis.start === "function") lenis.start();
+    if (hasScrollTrigger) ScrollTrigger.refresh();
+  }
+}
+
 // Case study to case study: the bottom of one page is already a copy of
 // the next page's hero, so the new page is laid exactly over it and the
 // old one removed. Nothing visibly changes.
@@ -431,6 +539,7 @@ if (!inWebflowEditor()) {
         sync: true,
         async once(data) {
           initOnceFunctions();
+          initFirstVisitIntro();
           initBeforeEnterFunctions(data.next.container);
           initAfterEnterFunctions(data.next.container);
           return runPageOnceAnimation(data.next.container);
@@ -447,6 +556,7 @@ if (!inWebflowEditor()) {
 
 } else {
   // In the Editor: smooth scroll and page features only
+  document.documentElement.classList.remove("bc-intro");
   initLenis();
   initNavMain();
   if (document.querySelector("[data-case-hero]")) initCaseIntro(document);
