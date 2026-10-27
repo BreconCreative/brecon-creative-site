@@ -35,7 +35,7 @@ Put the previous commit ID back in the Webflow script link and publish. The comm
 
 ## Why the head code stays in Webflow
 
-It has to arrive inside the page. The early script and the critical styles (no white flash between pages, intro text hidden until it animates in) would flash or hold up the first paint if they loaded as separate files. The Button Roll styles are shared by several components (nav, hero, footer), so they live there once rather than in every component.
+It has to arrive inside the page. The early script and the critical styles (no white flash between pages, intro text hidden until it animates in) would flash or hold up the first paint if they loaded as separate files. Button Roll is a component, but a few of its styles stay in the head: the hover colour mixes (Webflow's style panel cannot store `color-mix()`), the Glass variant's frosted finish and the rule that hides the icon when the Icon switch is off.
 
 ## Rules
 
