@@ -74,6 +74,7 @@ function initOnceFunctions() {
 function initBeforeEnterFunctions(next) {
   nextPage = next || document;
   if (has("[data-case-hero]")) initCaseIntro(nextPage);
+  if (has("[data-card-spot][data-accent]")) initCardAccent(nextPage);
   if (has("[data-price]")) initPricing(nextPage);
   if (has("[data-faq-order]")) initFaqOrder(nextPage);
   if (has("[data-reveal]")) initReveal(nextPage);
@@ -503,6 +504,17 @@ function initCardSpot(scope) {
       card.style.setProperty("--px", "0");
       card.style.setProperty("--py", "0");
     });
+  });
+}
+
+// Card accent colour from the CMS (hex), for project cards. Sets --accent on
+// the card so its cover, dot and hover pick up the client's colour. Empty
+// keeps Brecon orange.
+function initCardAccent(scope) {
+  scope.querySelectorAll("[data-card-spot][data-accent]").forEach(card => {
+    const accent = (card.getAttribute("data-accent") || "").trim();
+    if (!/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.test(accent)) return;
+    card.style.setProperty("--accent", accent.charAt(0) === "#" ? accent : "#" + accent);
   });
 }
 
