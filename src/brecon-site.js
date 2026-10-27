@@ -156,7 +156,7 @@ function runPageEnterAnimation(next) {
 // arrives with a curved top. The kite rides the peak. Once the page is two
 // cap heights from the top, the curve relaxes flat as it lands and the kite
 // beats its wings once, lets go and climbs out of view.
-const KITE_WING = "M135.23,53.45l-2.57-2.58h0c-.19-5.06-.88-9.94-2.09-13.71l-5.25,5.25c1.21,6.99,1.21,15.7,0,22.7l5.25,5.25c1.2-3.77,1.89-8.65,2.08-13.71h.01s2.56-2.57,2.56-2.57l.32-.32-.32-.32Z";
+const KITE_WING = "M132.66,50.87h0c-.19-5.06-.88-9.94-2.09-13.71l-5.25,5.25c1.21,6.99,1.21,15.7,0,22.7l5.25,5.25c1.2-3.77,1.89-8.65,2.08-13.71h.01s2.88-2.89,2.88-2.89l-2.89-2.9Z";
 const KITE_TAIL = "M120.11,59.9h0s-3.07-3.06-3.07-3.06h0c1.7-1.7,1.7-4.44,0-6.14h0s3.07-3.07,3.07-3.07l.02.02c3.37,3.39,3.37,8.87-.01,12.25Z";
 const KITE_CURVE = "M0,143 C116,106 347,0 500,0 C653,0 884,106 1000,143";
 let transitionKite = null;
