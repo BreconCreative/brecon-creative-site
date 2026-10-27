@@ -157,7 +157,7 @@ function runPageEnterAnimation(next) {
 // cap heights from the top, the curve relaxes flat as it lands and the kite
 // beats its wings once, lets go and climbs out of view.
 const KITE_WING = "M135.23,53.45l-2.57-2.58h0c-.19-5.06-.88-9.94-2.09-13.71l-5.25,5.25c1.21,6.99,1.21,15.7,0,22.7l5.25,5.25c1.2-3.77,1.89-8.65,2.08-13.71h.01s2.56-2.57,2.56-2.57l.32-.32-.32-.32Z";
-const KITE_TAIL = "M120.11,59.9h0s-3.07-3.06-3.07-3.06h0c1.7-1.7,1.7-4.44,0-6.14h0s3.07-3.07,3.07-3.07l.02.02c3.37,3.39,3.37,8.87-.01,12.25Z";
+const KITE_TAIL = "M126.24,53.77 L126.23,53.78 L120.11,59.9 L117.04,56.84 L120.11,53.77 L117.04,50.7 L120.11,47.63 L126.23,53.76Z";
 const KITE_CURVE = "M0,143 C116,106 347,0 500,0 C653,0 884,106 1000,143";
 let transitionKite = null;
 
@@ -223,7 +223,7 @@ function buildTransitionKite(next, dur) {
 
   gsap.set(body, { svgOrigin: "126 53.5", rotation: -90 });
   gsap.set(wing, { transformOrigin: "50% 50%" });
-  gsap.set(tail, { svgOrigin: "120.6 53.4" });
+  gsap.set(tail, { svgOrigin: "125.6 53.77" });
   // A gentle sway while it rides the peak
   const sway = gsap.timeline();
   sway.to(kiteEl, { x: 6, duration: dur * 0.5, ease: "sine.inOut", yoyo: true, repeat: 1 }, 0);
@@ -276,7 +276,9 @@ function buildTransitionKite(next, dur) {
 // plays it, then lifts it away with the kite's wing curve on its lower edge.
 // Any click, key, scroll or touch skips straight to the lift.
 // -----------------------------------------
-const LOGO_LETTERS = ["M162.79,53.52c3.96-1.85,6.65-5.52,6.65-9.73,0-6.26-5.91-11.24-12.99-11.01v-.02h-21.33c1.74,4.72,2.72,11.26,2.94,18.03l2.98,2.98-2.98,2.97c-.22,6.77-1.2,13.3-2.94,18.02h21.33v-.05c7.76.62,14.7-4.36,14.7-10.97,0-4.62-3.45-8.58-8.36-10.22ZM146.48,45.01c.11-5.26.69-9.54,2.99-10.16h4.31c4.04,0,7.31,4,7.31,8.93s-3.27,8.94-7.31,8.94h-7.3v-7.71ZM154.64,72.67h-8.16v-17.87h8.16c4.51,0,8.16,4,8.16,8.94s-3.65,8.93-8.16,8.93Z", "M214.24,74.77c-3.56-3.4-5.93-6.13-8.37-9.37l-7.56-10.58h.76c6.92,0,12.52-4.94,12.52-11.02.01-6.1-5.6-11.04-12.52-11.04h-23.51c3.99,10.82,3.99,31.18,0,42h14.34c-1.74-4.75-2.89-11.9-2.98-19.95h3.38l2.61,4.34c2.83,5.26,5.2,11.82,3.79,15.62h17.54ZM195.93,52.72h-9.02v-7.71c.12-5.26.69-9.54,2.99-10.15h6.03c4.03,0,7.31,4,7.31,8.93s-3.27,8.93-7.31,8.93Z", "M231.51,72.65c-1.35-4.64-2.21-10.9-2.29-17.84,6.82.05,12.82.52,16.93,4.63v-11.36c-4.12,4.12-10.12,4.59-16.94,4.63v-17.86h1.3c8.48,0,16.02,4.45,18.56,13.94l2.45-16.03h-33.66c3.99,10.82,3.99,31.18,0,42h33.65l-2.44-16.03c-2.45,9.12-9.49,13.58-17.56,13.92Z", "M267.04,37.38c8.35-4.82,18.14,5.74,21.49,12.84v-14.34c-2.84-1.99-7.58-3.12-12.05-3.12-11.6,0-21,9.4-21,21s9.41,21,21,21c5.01,0,10.68-1.82,12.05-6.91-.71.92-1.57,1.7-2.59,2.29-6.04,3.49-15.18-1.01-20.4-10.06-5.22-9.04-4.55-19.2,1.5-22.7Z", "M311.28,32.76c-11.59,0-21,9.4-21,21s9.41,21,21,21,21-9.4,21-21-9.4-21-21-21ZM320.74,70.14c-6.05,3.49-15.18-1.01-20.4-10.06-5.22-9.04-4.56-19.2,1.49-22.7,6.04-3.49,15.18,1.02,20.4,10.07,5.22,9.04,4.55,19.2-1.49,22.69Z", "M369.19,49.91c.03-6.91.47-12.99,4.63-17.15h-11.36c4.16,4.16,4.59,10.24,4.63,17.14v7.71c-.02,4.12-.19,7.95-1.2,11.25l-8.42-15.1c-5.19-10.16-8.77-16.2-8.77-21h-17.14c4.16,4.16,4.6,10.24,4.63,17.14v7.71c-.03,6.91-.47,12.99-4.63,17.14h11.36c-4.16-4.15-4.6-10.24-4.63-17.14v-7.7c.02-4.12.19-7.95,1.2-11.24l8.42,15.1c5.2,10.16,8.77,16.19,8.77,21h17.14c-4.15-4.16-4.6-10.24-4.63-17.14v-7.72Z"];
+const LOGO_LETTERS = ["M162.79,53.52c3.96-1.85,6.65-5.52,6.65-9.73,0-6.26-5.91-11.24-12.99-11.01v-.02h-21.33c1.74,4.72,2.72,11.26,2.94,18.03l2.98,2.98-2.98,2.97c-.22,6.77-1.2,13.3-2.94,18.02h21.33c7.95,0,14.7-4.41,14.7-11.02,0-4.62-3.45-8.58-8.36-10.22ZM146.48,45.01c.11-5.26.69-9.54,2.99-10.16h4.31c4.04,0,7.31,4,7.31,8.93s-3.27,8.94-7.31,8.94h-7.3v-7.71ZM154.64,72.67h-8.16v-17.87h8.16c4.51,0,8.16,4,8.16,8.94s-3.65,8.93-8.16,8.93Z", "M214.24,74.77c-3.56-3.4-5.93-6.13-8.37-9.37l-7.56-10.58h.76c6.92,0,12.52-4.94,12.52-11.02.01-6.1-5.6-11.04-12.52-11.04h-23.51c3.99,10.82,3.99,31.18,0,42h14.34c-1.74-4.75-2.89-11.9-2.98-19.95h3.38l2.61,4.34c2.83,5.26,5.2,11.82,3.79,15.62h17.54ZM195.93,52.72h-9.02v-7.71c.12-5.26.69-9.54,2.99-10.15h6.03c4.03,0,7.31,4,7.31,8.93s-3.27,8.93-7.31,8.93Z", "M231.51,72.65c-1.35-4.64-2.21-10.9-2.29-17.84,6.82.05,12.82.52,16.93,4.63v-11.36c-4.12,4.12-10.12,4.59-16.94,4.63v-17.86h1.3c8.48,0,16.02,4.45,18.56,13.94l2.45-16.03h-33.66c3.99,10.82,3.99,31.18,0,42h33.65l-2.44-16.03c-2.45,9.12-9.49,13.58-17.56,13.92Z", "M267.04,37.38c8.35-4.82,18.14,5.74,21.49,12.84v-14.34c-2.84-1.99-7.58-3.12-12.05-3.12-11.6,0-21,9.4-21,21s9.41,21,21,21c5.01,0,10.68-1.82,12.05-6.91-.71.92-1.57,1.7-2.59,2.29-6.04,3.49-15.18-1.01-20.4-10.06-5.22-9.04-4.55-19.2,1.5-22.7Z", "M311.28,32.76c-11.59,0-21,9.4-21,21s9.41,21,21,21,21-9.4,21-21-9.4-21-21-21ZM320.74,70.14c-6.05,3.49-15.18-1.01-20.4-10.06-5.22-9.04-4.56-19.2,1.49-22.7,6.04-3.49,15.18,1.02,20.4,10.07,5.22,9.04,4.55,19.2-1.49,22.69Z", "M369.19,49.91c.03-6.91.47-12.99,4.63-17.15h-11.36c4.16,4.16,4.59,10.24,4.63,17.14v7.71c-.02,4.12-.19,7.95-1.2,11.25l-8.42-15.1c-5.19-10.16-8.77-16.2-8.77-21h-17.14c4.16,4.16,4.6,10.24,4.63,17.14v7.71c-.03,6.91-.47,12.99-4.63,17.14h11.36c-4.16-4.15-4.6-10.24-4.63-17.14v-7.7c.02-4.12.19-7.95,1.2-11.24l8.42,15.1c5.2,10.16,8.77,16.19,8.77,21h17.14c-4.15-4.16-4.6-10.24-4.63-17.14v-7.72Z"];
+// CREATIVE, from the October 2026 lockup, drawn 25.95 units lower in that file
+const LOGO_CREATIVE = [["path", "d", "M210.43,122.81c-.44.47-.97.71-1.58.71-.58,0-1.07-.18-1.46-.54-.39-.36-.69-.88-.89-1.56-.2-.68-.3-1.51-.3-2.48s.1-1.82.3-2.51c.2-.68.5-1.21.89-1.57.39-.36.88-.54,1.46-.54s1.07.22,1.49.65.72,1.06.88,1.89l1.85-.1c-.24-1.29-.73-2.3-1.47-3.01-.75-.72-1.66-1.08-2.75-1.08-.96,0-1.78.26-2.45.77-.67.51-1.18,1.23-1.52,2.16s-.52,2.04-.52,3.33.17,2.39.52,3.32.86,1.65,1.52,2.16c.67.5,1.48.76,2.45.76,1.16,0,2.11-.38,2.86-1.15.75-.76,1.23-1.83,1.43-3.2l-1.83-.08c-.15.91-.44,1.6-.88,2.07Z"], ["path", "d", "M224.84,119.84c-.28-.24-.68-.4-1.16-.48.23-.07.46-.17.67-.3.41-.25.74-.59.99-1.03.25-.44.38-.94.38-1.52,0-1.1-.36-1.97-1.09-2.61-.72-.64-1.72-.96-2.99-.96h-3.72v11.96h1.77v-4.66h2.09c.49,0,.88.05,1.16.15.28.1.49.27.62.51s.22.55.25.94l.27,3.06h1.77l-.3-3.4c-.07-.76-.31-1.32-.72-1.66ZM221.61,118.59h-1.92v-3.97h1.92c.74,0,1.31.17,1.7.51.39.34.59.83.59,1.47s-.2,1.12-.59,1.46c-.39.35-.96.52-1.7.52Z"], ["polygon", "points", "233.1 119.71 238.47 119.71 238.47 118.1 233.1 118.1 233.1 114.61 238.67 114.61 238.67 112.94 231.33 112.94 231.33 124.9 238.8 124.9 238.8 123.23 233.1 123.23 233.1 119.71"], ["path", "d", "M246.8,112.94l-3.5,11.96h1.83l.87-3.12h3.89l.87,3.12h1.83l-3.5-11.96h-2.29ZM246.45,120.15l1.49-5.37,1.49,5.37h-2.98Z"], ["polygon", "points", "256.62 114.61 260.12 114.61 260.12 124.9 261.87 124.9 261.87 114.61 265.37 114.61 265.37 112.94 256.62 112.94 256.62 114.61"], ["polygon", "points", "270.31 114.61 273.17 114.61 273.17 123.23 270.31 123.23 270.31 124.9 277.78 124.9 277.78 123.23 274.92 123.23 274.92 114.61 277.78 114.61 277.78 112.94 270.31 112.94 270.31 114.61"], ["polygon", "points", "287.1 122.52 284.37 112.94 282.5 112.94 286.05 124.9 288.14 124.9 291.69 112.94 289.82 112.94 287.1 122.52"], ["polygon", "points", "298.34 123.23 298.34 119.71 303.71 119.71 303.71 118.1 298.34 118.1 298.34 114.61 303.92 114.61 303.92 112.94 296.57 112.94 296.57 124.9 304.05 124.9 304.05 123.23 298.34 123.23"]];
 const KITE_CURVE_DOWN = "M0,0 C116,37 347,143 500,143 C653,143 884,37 1000,0 Z";
 
 function initFirstVisitIntro() {
@@ -289,10 +291,10 @@ function initFirstVisitIntro() {
   const css = document.createElement("style");
   css.textContent =
     ".bc-intro_wrap{position:fixed;inset:0;z-index:2147483001;pointer-events:auto;background:var(--swatch--dark-900,#0a0e22);display:flex;align-items:center;justify-content:center}" +
-    ".bc-intro_wrap::before{content:\"\";position:absolute;inset:0;background:radial-gradient(55% 50% at 88% 72%,color-mix(in srgb,var(--swatch--brand-500,#ff6a3d) 22%,transparent),transparent 75%),radial-gradient(50% 45% at 6% 6%,color-mix(in srgb,var(--swatch--violet,#7b5cd6) 14%,transparent),transparent 72%)}" +
+    ".bc-intro_wrap::before{content:\"\";position:absolute;inset:0;background:radial-gradient(48% 40% at 86% 56%,color-mix(in srgb,var(--swatch--brand-500,#ff6a3d) 22%,transparent),transparent 75%),radial-gradient(50% 45% at 6% 6%,color-mix(in srgb,var(--swatch--violet,#7b5cd6) 14%,transparent),transparent 72%)}" +
     ".bc-intro_svg{position:relative;width:min(70vw,34rem);height:auto;overflow:visible}" +
     ".bc-intro_cap{position:absolute;left:0;top:100%;width:100%;display:block;margin-top:-1px;fill:var(--swatch--dark-900,#0a0e22)}" +
-    ".bc-intro_letter{fill:var(--swatch--light-200,#f2f1ec)}.bc-intro_kite{fill:var(--swatch--brand-500,#ff6a3d)}";
+    ".bc-intro_letter{fill:var(--swatch--light-200,#f2f1ec)}.bc-intro_word{fill:#dcd9d3}.bc-intro_kite{fill:var(--swatch--brand-500,#ff6a3d)}";
   document.head.appendChild(css);
 
   const capH = Math.round(window.innerWidth * 0.143);
@@ -300,10 +302,11 @@ function initFirstVisitIntro() {
   wrap.className = "bc-intro_wrap";
   wrap.setAttribute("aria-hidden", "true");
   wrap.innerHTML =
-    '<svg class="bc-intro_svg" viewBox="105 20 280 67" focusable="false">' +
+    '<svg class="bc-intro_svg" viewBox="105 22 280 84" focusable="false">' +
     '<defs><linearGradient id="bc-intro-grad" gradientUnits="userSpaceOnUse" x1="94" y1="0" x2="112" y2="0"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient>' +
     '<mask id="bc-intro-mask" maskUnits="userSpaceOnUse" x="100" y="20" width="300" height="70"><rect x="100" y="20" width="300" height="70" fill="url(#bc-intro-grad)"/></mask></defs>' +
     '<g mask="url(#bc-intro-mask)">' + LOGO_LETTERS.map(d => '<path class="bc-intro_letter" d="' + d + '"/>').join("") + "</g>" +
+    '<g class="bc-intro_creative" transform="translate(0,-25.95)">' + LOGO_CREATIVE.map(c => "<" + c[0] + ' class="bc-intro_word" ' + c[1] + '="' + c[2] + '"/>').join("") + "</g>" +
     '<g class="bc-intro_bird"><g class="bc-intro_bob"><g class="bc-intro_tail"><path class="bc-intro_kite" d="' + KITE_TAIL + '"/></g><path class="bc-intro_wing bc-intro_kite" d="' + KITE_WING + '"/></g></g></svg>' +
     '<svg class="bc-intro_cap" viewBox="0 0 1000 143" preserveAspectRatio="none" focusable="false" style="height:' + capH + 'px"><path d="' + KITE_CURVE_DOWN + '"/></svg>';
   document.body.appendChild(wrap);
@@ -315,15 +318,18 @@ function initFirstVisitIntro() {
   const wing = wrap.querySelector(".bc-intro_wing");
   const tail = wrap.querySelector(".bc-intro_tail");
   const letters = wrap.querySelectorAll(".bc-intro_letter");
+  const word = Array.from(wrap.querySelectorAll(".bc-intro_word"));
   const grad = wrap.querySelector("#bc-intro-grad");
   const cap = wrap.querySelector(".bc-intro_cap");
 
   CustomEase.create("retreat", "0.65, 0, 0.35, 1");
   CustomEase.create("unveil", "0.45, 0, 0.15, 1");
   const HOME_X = 126, HOME_Y = 53.5, HERO = 2.6;
-  gsap.set(bird, { svgOrigin: HOME_X + " " + HOME_Y, x: 245 - HOME_X, scale: HERO * 0.86, opacity: 0, filter: "blur(6px)" });
+  gsap.set(bird, { svgOrigin: HOME_X + " " + HOME_Y, x: 245 - HOME_X, y: 64 - HOME_Y, scale: HERO * 0.86, opacity: 0, filter: "blur(6px)" });
+  // CREATIVE starts spread out from its centre and closes up
+  word.forEach(w => { const b = w.getBBox(); gsap.set(w, { x: (b.x + b.width / 2 - 254.6) * 0.35, opacity: 0 }); });
   gsap.set(wing, { transformOrigin: "50% 50%", scaleY: 0.1 });
-  gsap.set(tail, { svgOrigin: "120.6 53.4" });
+  gsap.set(tail, { svgOrigin: "125.6 53.77" });
   gsap.set(letters, { x: -10 });
   gsap.set(cap, { scaleY: 0, transformOrigin: "50% 0%" });
 
@@ -343,7 +349,7 @@ function initFirstVisitIntro() {
   beat(0.75, 0.8, 1.1);
   beat(1.45, 0.8, 1.1);
   // Back to its place by the B
-  tl.to(bird, { x: 0, scale: 1, duration: 0.95, ease: "retreat" }, 2.05);
+  tl.to(bird, { x: 0, y: 0, scale: 1, duration: 0.95, ease: "retreat" }, 2.05);
   beat(2.92, 0.45, 1);
   tl.to(tail, { keyframes: [
     { rotation: -16, duration: 0.16, ease: "power2.out" },
@@ -353,8 +359,10 @@ function initFirstVisitIntro() {
   // The landing beat pushes the name out
   tl.to(grad, { attr: { x1: 380, x2: 398 }, duration: 0.95, ease: "unveil" }, 2.8);
   tl.to(letters, { x: 0, duration: 1.0, ease: "power3.out", stagger: 0.035 }, 2.85);
+  // The full name settles in under it
+  tl.to(word, { x: 0, opacity: 1, duration: 0.9, ease: "power3.out", stagger: { each: 0.03, from: "center" } }, 3.35);
   // Lift away on the wing curve
-  tl.addLabel("exit", 4.0);
+  tl.addLabel("exit", 4.35);
   tl.to(cap, { scaleY: 1, duration: 0.35, ease: "power2.out" }, "exit");
   tl.to(wrap, { y: -(window.innerHeight + capH), duration: 1.0, ease: "parallax" }, "exit");
 
