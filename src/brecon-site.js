@@ -32,6 +32,8 @@ let onceFunctionsInitialized = false;
 let closeNavMenu = null;
 let restNavIndicator = null;
 let isTransitioning = false;
+// True once Barba has swapped a page. Webflow sets up the first page's forms itself.
+let hasSwapped = false;
 
 const hasLenis = typeof window.Lenis !== "undefined";
 
@@ -252,6 +254,7 @@ if (!inWebflowEditor()) {
 
   barba.hooks.before(() => {
     isTransitioning = true;
+    hasSwapped = true;
     if (closeNavMenu) closeNavMenu();
   });
 
@@ -273,7 +276,8 @@ if (!inWebflowEditor()) {
 
   barba.hooks.afterEnter(data => {
     resetWebflow(data);
-    initFormsAfterSwap(data.next.container);
+    // Only after a swap: on the first load Webflow already renders Turnstile
+    if (hasSwapped) initFormsAfterSwap(data.next.container);
     initAfterEnterFunctions(data.next.container);
     if (hasLenis && lenis) { lenis.resize(); lenis.start(); }
     if (hasScrollTrigger) ScrollTrigger.refresh();
