@@ -1453,13 +1453,13 @@ function initJournal(scope) {
 
   const more = scope.querySelector("[data-journal-more]");
   if (more) {
-    const holder = scope.querySelector("[data-journal-current]");
-    const current = holder ? (holder.getAttribute("data-journal-current") || "").trim() : "";
+    // The article being read is the one whose card title matches this page's h1
+    const h1 = scope.querySelector("h1");
+    const current = h1 ? h1.textContent.trim() : "";
     let shown = 0;
     more.querySelectorAll(".journal_item").forEach(item => {
-      const link = item.querySelector("[data-journal-slug]");
-      const slug = link ? link.getAttribute("data-journal-slug").trim() : "";
-      const hide = (current && slug === current) || shown >= 3;
+      const title = item.querySelector(".journal_card_title");
+      const hide = (current && title && title.textContent.trim() === current) || shown >= 3;
       item.style.display = hide ? "none" : "flex"; // inline, so it wins over the stylesheet
       if (!hide) shown++;
     });
