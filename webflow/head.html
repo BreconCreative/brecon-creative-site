@@ -32,6 +32,8 @@ Designer. Only the hover colour blends stay here: they mix Lumos trigger values,
 .button-roll_wrap[data-icon="false" i] .button-roll_icon { display: none; }
 /* Button Roll, Glass variant */
 .button-roll_wrap.w-variant-23bfc25e-af84-2527-0866-8f9e1a1a5db5 { color: var(--_theme---text); background-color: color-mix(in srgb, var(--_theme---text) calc(7% + 4% * var(--_trigger---off)), transparent); border-color: color-mix(in srgb, var(--_theme---text) 16%, transparent); -webkit-backdrop-filter: blur(1.5rem) saturate(140%); box-shadow: inset 0 0.0625rem 0 color-mix(in srgb, var(--_theme---text) 18%, transparent), 0 0.625rem 2.5rem color-mix(in srgb, var(--swatch--dark-900) 35%, transparent); }
+/* Button Roll, Glass sheen: a soft highlight in the theme text colour */
+.button-roll_sheen { background-image: linear-gradient(100deg, transparent, color-mix(in srgb, var(--_theme---text) 22%, transparent), transparent); }
 /* Button Main, Back variant (contact brief): muted until hover or focus */
 .button_main_element.w-variant-ff913296-6238-8c23-5837-a23ed1ae089d { color: color-mix(in hsl, var(--_theme---text) calc(70% + 30% * var(--_trigger---off)), transparent); transition: color 300ms ease; }
 /* Typography Eyebrow, Label Dot variant: glowing brand dot */
