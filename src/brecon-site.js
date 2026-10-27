@@ -135,13 +135,136 @@ function runPageEnterAnimation(next) {
     return new Promise(resolve => tl.call(resolve, null, "pageReady"));
   }
 
+  // The new page rises on the kite's wing: its top edge is the wing's curve
+  const kite = buildTransitionKite(next, dur);
+
   tl.add("startEnter", 0);
   tl.set(next, { zIndex: 3 });
-  tl.fromTo(next, { y: "100vh" }, { y: "0vh", duration: dur, clearProps: "all", ease: "parallax" }, "startEnter");
+  tl.fromTo(next, { y: kite.startY }, {
+    y: 0, duration: dur, clearProps: "all", ease: "parallax",
+    onUpdate: () => kite.update(gsap.getProperty(next, "y"))
+  }, "startEnter");
   tl.add("pageReady");
   tl.call(resetPage, [next], "pageReady");
 
   return new Promise(resolve => tl.call(resolve, null, "pageReady"));
+}
+
+// Kite transition layer. A fixed layer moves in step with the incoming page.
+// It carries a cap shaped like the outer edge of the kite's wing (the logo
+// mark turned nose up), filled with the page's own top colour, so the page
+// arrives with a curved top. The kite rides the peak. Once the page is two
+// cap heights from the top, the curve relaxes flat as it lands and the kite
+// beats its wings once, lets go and climbs out of view.
+const KITE_WING = "M135.23,53.45l-2.57-2.58h0c-.19-5.06-.88-9.94-2.09-13.71l-5.25,5.25c1.21,6.99,1.21,15.7,0,22.7l5.25,5.25c1.2-3.77,1.89-8.65,2.08-13.71h.01s2.56-2.57,2.56-2.57l.32-.32-.32-.32Z";
+const KITE_TAIL = "M120.11,59.9h0s-3.07-3.06-3.07-3.06h0c1.7-1.7,1.7-4.44,0-6.14h0s3.07-3.07,3.07-3.07l.02.02c3.37,3.39,3.37,8.87-.01,12.25Z";
+const KITE_CURVE = "M0,143 C116,106 347,0 500,0 C653,0 884,106 1000,143";
+let transitionKite = null;
+
+function injectTransitionKiteStyles() {
+  if (document.getElementById("bc-tk-style")) return;
+  const s = document.createElement("style");
+  s.id = "bc-tk-style";
+  s.textContent =
+    ".bc-tk{position:fixed;top:0;left:0;width:100%;height:0;z-index:4;pointer-events:none;will-change:transform}" +
+    ".bc-tk_cap{position:absolute;left:0;bottom:-1px;width:100%;display:block;overflow:visible;transform-origin:50% 100%;color:var(--_light-field---apricot,#ffa27e)}" +
+    ".bc-tk_fill{fill:var(--bc-tk-bg,#0a0d1c)}" +
+    ".bc-tk_line{fill:none;stroke:url(#bc-tk-line);stroke-width:1.5;vector-effect:non-scaling-stroke}" +
+    ".bc-tk_rider{position:absolute;top:0;left:0;width:100%;height:0}" +
+    ".bc-tk_halo{position:absolute;left:50%;bottom:-1rem;width:40vw;height:8rem;margin-left:-20vw;background:radial-gradient(50% 100% at 50% 100%,color-mix(in srgb,var(--swatch--brand-500,#ff6a3d) 24%,transparent),transparent 70%)}" +
+    ".bc-tk_streak{position:absolute;left:50%;bottom:0;width:2px;height:100vh;margin-left:-1px;transform-origin:50% 100%;transform:scaleY(0);background:linear-gradient(0deg,transparent,color-mix(in srgb,var(--swatch--brand-500,#ff6a3d) 40%,transparent) 45%,var(--_light-field---apricot,#ffa27e))}" +
+    ".bc-tk_kite{position:absolute;left:50%;top:0;width:3.25rem;height:5.4rem;margin:-3.3rem 0 0 -1.625rem;overflow:visible;fill:var(--swatch--brand-500,#ff6a3d)}" +
+    "@media (max-width:767px){.bc-tk_kite{width:2.5rem;height:4.15rem;margin:-2.55rem 0 0 -1.25rem}}";
+  document.head.appendChild(s);
+}
+
+// The colour at the very top of the incoming page, so the cap matches it
+function pageTopColour(el) {
+  const clear = c => !c || c === "transparent" || /^rgba\(.*,\s*0\)$/.test(c);
+  let n = el;
+  for (let d = 0; d < 8 && n; d++) {
+    const c = getComputedStyle(n).backgroundColor;
+    if (!clear(c)) return c;
+    n = Array.from(n.children).find(k => {
+      const p = getComputedStyle(k).position;
+      return k.offsetHeight > 0 && p !== "absolute" && p !== "fixed";
+    });
+  }
+  return getComputedStyle(document.body).backgroundColor;
+}
+
+function buildTransitionKite(next, dur) {
+  if (transitionKite) transitionKite.destroy();
+  injectTransitionKiteStyles();
+  const vh = window.innerHeight;
+  const capH = Math.round(window.innerWidth * 0.143);
+
+  const layer = document.createElement("div");
+  layer.className = "bc-tk";
+  layer.setAttribute("aria-hidden", "true");
+  layer.style.setProperty("--bc-tk-bg", pageTopColour(next));
+  layer.innerHTML =
+    '<svg class="bc-tk_cap" viewBox="0 0 1000 143" preserveAspectRatio="none" focusable="false" style="height:' + capH + 'px">' +
+    '<defs><linearGradient id="bc-tk-line" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="currentColor" stop-opacity="0"/><stop offset="0.5" stop-color="currentColor"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></linearGradient></defs>' +
+    '<path class="bc-tk_fill" d="' + KITE_CURVE + ' L1000,146 L0,146 Z"/><path class="bc-tk_line" d="' + KITE_CURVE + '"/></svg>' +
+    '<div class="bc-tk_rider"><div class="bc-tk_halo"></div><div class="bc-tk_streak"></div>' +
+    '<svg class="bc-tk_kite" viewBox="115 36 22 36" focusable="false"><g class="bc-tk_body"><g class="bc-tk_tail"><path d="' + KITE_TAIL + '"/></g><path class="bc-tk_wing" d="' + KITE_WING + '"/></g></svg></div>';
+  document.body.appendChild(layer);
+
+  const cap = layer.querySelector(".bc-tk_cap");
+  const line = layer.querySelector(".bc-tk_line");
+  const rider = layer.querySelector(".bc-tk_rider");
+  const halo = layer.querySelector(".bc-tk_halo");
+  const streak = layer.querySelector(".bc-tk_streak");
+  const kiteEl = layer.querySelector(".bc-tk_kite");
+  const body = layer.querySelector(".bc-tk_body");
+  const wing = layer.querySelector(".bc-tk_wing");
+  const tail = layer.querySelector(".bc-tk_tail");
+
+  gsap.set(body, { svgOrigin: "126 53.5", rotation: -90 });
+  gsap.set(wing, { transformOrigin: "50% 50%" });
+  gsap.set(tail, { svgOrigin: "120.6 53.4" });
+  // A gentle sway while it rides the peak
+  const sway = gsap.timeline();
+  sway.to(kiteEl, { x: 6, duration: dur * 0.5, ease: "sine.inOut", yoyo: true, repeat: 1 }, 0);
+  sway.to(body, { rotation: -86, duration: dur * 0.5, ease: "sine.inOut", yoyo: true, repeat: 1 }, 0);
+
+  let released = false, flight = null;
+  const destroy = () => {
+    sway.kill();
+    if (flight) flight.kill();
+    layer.remove();
+    if (transitionKite === api) transitionKite = null;
+  };
+  const release = () => {
+    released = true;
+    flight = gsap.timeline({ onComplete: destroy });
+    flight.to(wing, { keyframes: [
+      { scaleY: 0.45, scaleX: 1.12, duration: 0.12, ease: "power2.in" },
+      { scaleY: 1.06, scaleX: 0.98, duration: 0.16, ease: "power2.out" },
+      { scaleY: 1, scaleX: 1, duration: 0.2, ease: "sine.inOut" }
+    ] }, 0);
+    flight.to(tail, { keyframes: [
+      { rotation: -16, duration: 0.12, ease: "power2.out" },
+      { rotation: 0, duration: 0.32, ease: "back.out(2)" }
+    ] }, 0.08);
+    flight.to(kiteEl, { y: -vh * 1.15, duration: dur * 0.62, ease: "power2.in" }, 0.08);
+    flight.to(streak, { scaleY: 1.1, duration: dur * 0.62, ease: "power2.in" }, 0.08);
+    flight.to(streak, { autoAlpha: 0, duration: dur * 0.45, ease: "power1.out" }, 0.08 + dur * 0.4);
+    flight.to([halo, line], { autoAlpha: 0, duration: dur * 0.5, ease: "power1.out" }, 0.08 + dur * 0.25);
+  };
+  const update = y => {
+    const a = Math.min(1, Math.max(0, y / (2 * capH)));
+    gsap.set(layer, { y: y });
+    gsap.set(cap, { scaleY: a });
+    gsap.set(rider, { y: -capH * a });
+    if (!released && y <= 2 * capH) release();
+  };
+
+  const api = { startY: vh + capH, update, destroy };
+  update(api.startY);
+  transitionKite = api;
+  return api;
 }
 
 // Case study to case study: the bottom of one page is already a copy of
