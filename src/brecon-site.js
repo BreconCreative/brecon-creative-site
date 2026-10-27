@@ -157,7 +157,7 @@ function runPageEnterAnimation(next) {
 // cap heights from the top, the curve relaxes flat as it lands and the kite
 // beats its wings once, lets go and climbs out of view.
 const KITE_WING = "M135.23,53.45l-2.57-2.58h0c-.19-5.06-.88-9.94-2.09-13.71l-5.25,5.25c1.21,6.99,1.21,15.7,0,22.7l5.25,5.25c1.2-3.77,1.89-8.65,2.08-13.71h.01s2.56-2.57,2.56-2.57l.32-.32-.32-.32Z";
-const KITE_TAIL = "M126.24,53.77 L126.23,53.78 L120.11,59.9 L117.04,56.84 L120.11,53.77 L117.04,50.7 L120.11,47.63 L126.23,53.76Z";
+const KITE_TAIL = "M120.11,59.9h0s-3.07-3.06-3.07-3.06h0c1.7-1.7,1.7-4.44,0-6.14h0s3.07-3.07,3.07-3.07l.02.02c3.37,3.39,3.37,8.87-.01,12.25Z";
 const KITE_CURVE = "M0,143 C116,106 347,0 500,0 C653,0 884,106 1000,143";
 let transitionKite = null;
 
@@ -223,7 +223,7 @@ function buildTransitionKite(next, dur) {
 
   gsap.set(body, { svgOrigin: "126 53.5", rotation: -90 });
   gsap.set(wing, { transformOrigin: "50% 50%" });
-  gsap.set(tail, { svgOrigin: "125.6 53.77" });
+  gsap.set(tail, { svgOrigin: "120.6 53.4" });
   // A gentle sway while it rides the peak
   const sway = gsap.timeline();
   sway.to(kiteEl, { x: 6, duration: dur * 0.5, ease: "sine.inOut", yoyo: true, repeat: 1 }, 0);
@@ -329,7 +329,7 @@ function initFirstVisitIntro() {
   // CREATIVE starts spread out from its centre and closes up
   word.forEach(w => { const b = w.getBBox(); gsap.set(w, { x: (b.x + b.width / 2 - 254.6) * 0.35, opacity: 0 }); });
   gsap.set(wing, { transformOrigin: "50% 50%", scaleY: 0.1 });
-  gsap.set(tail, { svgOrigin: "125.6 53.77" });
+  gsap.set(tail, { svgOrigin: "120.6 53.4" });
   gsap.set(letters, { x: -10 });
   gsap.set(cap, { scaleY: 0, transformOrigin: "50% 0%" });
 
