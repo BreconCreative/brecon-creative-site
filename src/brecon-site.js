@@ -90,6 +90,7 @@ function initAfterEnterFunctions(next) {
   if (has("[data-case-hero]")) initCase(nextPage);
   if (has("[data-contact]")) initContact(nextPage);
   if (has("details[data-accordion]")) initAccordion(nextPage);
+  if (has("[data-not-found]")) initNotFound(nextPage);
   if (restNavIndicator) restNavIndicator();
 
   if (hasLenis && lenis) lenis.resize();
@@ -1427,6 +1428,84 @@ function initFaqOrder(scope) {
 // Accordions: native <details> tagged data-accordion open and close with a
 // smooth height animation instead of snapping. Keyboard, find-in-page and
 // no-JavaScript behaviour stay native. Reduced motion keeps the snap.
+// -----------------------------------------
+// 404 | THE KITE TOOK IT
+// "Another excuse" cycles through excuses in a shuffled order, never the same
+// one twice in a row. Tapping the kite does the same, with a startled flap.
+// The text sits in a polite live region so screen readers hear each new excuse.
+// -----------------------------------------
+const NOT_FOUND_EXCUSES = [
+  "The intern deleted it. There is no intern.",
+  "It went for a walk up Pen y Fan. Back by teatime, probably.",
+  "It fell in the Wye near Glasbury. We've sent a canoe.",
+  "The client asked for the logo to be bigger. Something had to go.",
+  "It's in round two of amends. It may be some time.",
+  "We turned it off and on again. Now it's just off.",
+  "It was here a minute ago. We've checked behind the sofa twice.",
+  "It's lining a nest somewhere over Brecon. Very cosy, apparently.",
+  "Someone typed the address with their elbow. We're not saying it was you.",
+  "A red kite took it. We did mention they do that."
+];
+
+function initNotFound(scope) {
+  const root = scope.querySelector("[data-not-found]");
+  if (!root || root.dataset.scriptInitialized) return;
+  root.dataset.scriptInitialized = "true";
+  const text = root.querySelector("[data-excuse-text]");
+  const count = root.querySelector("[data-excuse-count]");
+  const next = root.querySelector("[data-excuse-next]");
+  const kite = root.querySelector("[data-nf-kite]");
+  const sky = root.querySelector("[data-nf-sky]");
+  if (!text) return;
+
+  const total = NOT_FOUND_EXCUSES.length;
+  let order = [], pos = -1, last = 0;
+  const shuffle = () => {
+    order = [...Array(total).keys()].sort(() => Math.random() - 0.5);
+    // First round: the excuse already on screen goes to the back of the queue
+    if (pos < 0) order = order.filter(i => i !== last).concat(last);
+    else if (order[0] === last) order.push(order.shift());
+    pos = 0;
+  };
+  let seen = 1;
+  const show = () => {
+    if (pos < 0 || pos >= order.length - 1) shuffle(); else pos++;
+    last = order[pos];
+    seen++; // keeps counting past the total: "Excuse 11 of 10" is part of the joke
+    const swap = () => {
+      text.textContent = NOT_FOUND_EXCUSES[last];
+      if (count) count.textContent = "Excuse " + String(seen).padStart(2, "0") + " of " + total;
+    };
+    if (reducedMotion || typeof gsap === "undefined") { swap(); return; }
+    gsap.timeline()
+      .to(text, { opacity: 0, y: -6, duration: 0.18, ease: "power2.in", onComplete: swap })
+      .fromTo(text, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" });
+  };
+  last = 0;
+  text.textContent = NOT_FOUND_EXCUSES[0];
+  if (count) count.textContent = "Excuse 01 of " + total;
+
+  if (next) next.addEventListener("click", show);
+  if (kite) kite.addEventListener("click", () => {
+    show();
+    kite.classList.remove("is-startled");
+    void kite.getBoundingClientRect();
+    kite.classList.add("is-startled");
+  });
+
+  // The kite leans a little towards the pointer, on mouse and trackpad only
+  if (sky && !reducedMotion && typeof gsap !== "undefined" && matchMedia("(hover: hover) and (pointer: fine)").matches) {
+    const tx = gsap.quickTo(sky, "x", { duration: 1.2, ease: "power3.out" });
+    const ty = gsap.quickTo(sky, "y", { duration: 1.2, ease: "power3.out" });
+    root.addEventListener("pointermove", e => {
+      const b = root.getBoundingClientRect();
+      tx(((e.clientX - b.left) / b.width - 0.5) * 24);
+      ty(((e.clientY - b.top) / b.height - 0.5) * 16);
+    });
+    root.addEventListener("pointerleave", () => { tx(0); ty(0); });
+  }
+}
+
 function initAccordion(scope) {
   scope.querySelectorAll("details[data-accordion]").forEach(d => {
     if (d.dataset.scriptInitialized) return;
