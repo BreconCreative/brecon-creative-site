@@ -5,9 +5,11 @@
 document.documentElement.classList.add("bc-js");
 setTimeout(function () { if (!window.bcSiteReady) document.documentElement.classList.remove("bc-js"); }, 4000);
 // First visit intro: cover the page before first paint so the logo animation can play over it.
-// Only on a first visit with motion allowed. If the site script never starts, the cover lifts.
+// Only on a first visit with motion allowed. Add ?intro to any URL to see it again.
+// If the site script never starts, the cover lifts.
 try {
-  if (!localStorage.getItem("bc-intro-seen") && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  var bcIntroAgain = /[?&]intro(=|&|$)/.test(location.search);
+  if ((bcIntroAgain || !localStorage.getItem("bc-intro-seen")) && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
     document.documentElement.classList.add("bc-intro");
     setTimeout(function () { if (!window.bcIntroStarted) document.documentElement.classList.remove("bc-intro"); }, 4000);
   }
