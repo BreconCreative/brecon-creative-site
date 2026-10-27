@@ -77,6 +77,7 @@ function initBeforeEnterFunctions(next) {
   if (has("[data-card-spot][data-accent], .projects_card_title")) initProjectCards(nextPage);
   if (has("[data-price]")) initPricing(nextPage);
   if (has("[data-faq-order]")) initFaqOrder(nextPage);
+  if (has("[data-journal-more]")) initJournal(nextPage);
   if (has("[data-reveal]")) initReveal(nextPage);
 }
 
@@ -1425,6 +1426,27 @@ function initFaqOrder(scope) {
 // Accordions: native <details> tagged data-accordion open and close with a
 // smooth height animation instead of snapping. Keyboard, find-in-page and
 // no-JavaScript behaviour stay native. Reduced motion keeps the snap.
+// -----------------------------------------
+// JOURNAL
+// "More from the journal" hides the article you're reading and shows three.
+// Webflow marks the current link with w--current on a full load only, not
+// after a Barba swap, so this matches the card title against the page's h1.
+// Runs before the page is shown, so nothing changes in front of anyone.
+// -----------------------------------------
+function initJournal(scope) {
+  const more = scope.querySelector("[data-journal-more]");
+  if (!more) return;
+  const h1 = scope.querySelector("h1");
+  const current = h1 ? h1.textContent.trim() : "";
+  let shown = 0;
+  more.querySelectorAll(".journal_item").forEach(item => {
+    const title = item.querySelector(".journal_card_title");
+    const hide = (current && title && title.textContent.trim() === current) || shown >= 3;
+    item.style.display = hide ? "none" : "flex"; // inline, so it wins over the stylesheet
+    if (!hide) shown++;
+  });
+}
+
 // -----------------------------------------
 // 404 | THE KITE TOOK IT
 // "Another excuse" cycles through excuses in a shuffled order, never the same
