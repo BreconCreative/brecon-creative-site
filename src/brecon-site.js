@@ -74,7 +74,7 @@ function initOnceFunctions() {
 function initBeforeEnterFunctions(next) {
   nextPage = next || document;
   if (has("[data-case-hero]")) initCaseIntro(nextPage);
-  if (has("[data-card-spot][data-accent]")) initCardAccent(nextPage);
+  if (has("[data-card-spot][data-accent], [data-project-slug]")) initProjectCards(nextPage);
   if (has("[data-price]")) initPricing(nextPage);
   if (has("[data-faq-order]")) initFaqOrder(nextPage);
   if (has("[data-reveal]")) initReveal(nextPage);
@@ -507,14 +507,20 @@ function initCardSpot(scope) {
   });
 }
 
-// Card accent colour from the CMS (hex), for project cards. Sets --accent on
-// the card so its cover, dot and hover pick up the client's colour. Empty
-// keeps Brecon orange.
-function initCardAccent(scope) {
+// Project cards on the Projects index (CMS list).
+// Accent: sets --accent from the CMS hex so the cover, dot and hover pick up
+// the client's colour. Empty keeps Brecon orange.
+// Link: the Webflow API can't point a list item at its own page, so the card
+// carries its slug and this sets the href (same pattern as Next project).
+function initProjectCards(scope) {
   scope.querySelectorAll("[data-card-spot][data-accent]").forEach(card => {
     const accent = (card.getAttribute("data-accent") || "").trim();
     if (!/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.test(accent)) return;
     card.style.setProperty("--accent", accent.charAt(0) === "#" ? accent : "#" + accent);
+  });
+  scope.querySelectorAll("a[data-project-slug]").forEach(link => {
+    const slug = (link.getAttribute("data-project-slug") || "").trim();
+    if (/^[a-z0-9-]+$/i.test(slug)) link.setAttribute("href", "/projects/" + slug);
   });
 }
 
