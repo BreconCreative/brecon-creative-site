@@ -162,19 +162,21 @@ const KITE_CURVE = "M0,143 C116,106 347,0 500,0 C653,0 884,106 1000,143";
 let transitionKite = null;
 
 function injectTransitionKiteStyles() {
+  // Selectors carry the svg tag: Webflow's normalize sets svg:not(:root) { overflow: hidden },
+  // which would otherwise beat a single class and crop the wings.
   if (document.getElementById("bc-tk-style")) return;
   const s = document.createElement("style");
   s.id = "bc-tk-style";
   s.textContent =
     ".bc-tk{position:fixed;top:0;left:0;width:100%;height:0;z-index:4;pointer-events:none;will-change:transform}" +
-    ".bc-tk_cap{position:absolute;left:0;bottom:-1px;width:100%;display:block;overflow:visible;transform-origin:50% 100%;color:var(--_light-field---apricot,#ffa27e)}" +
+    ".bc-tk svg.bc-tk_cap{position:absolute;left:0;bottom:-1px;width:100%;display:block;overflow:visible;transform-origin:50% 100%;color:var(--_light-field---apricot,#ffa27e)}" +
     ".bc-tk_fill{fill:var(--bc-tk-bg,#0a0d1c)}" +
     ".bc-tk_line{fill:none;stroke:url(#bc-tk-line);stroke-width:1.5;vector-effect:non-scaling-stroke}" +
     ".bc-tk_rider{position:absolute;top:0;left:0;width:100%;height:0}" +
     ".bc-tk_halo{position:absolute;left:50%;bottom:-1rem;width:40vw;height:8rem;margin-left:-20vw;background:radial-gradient(50% 100% at 50% 100%,color-mix(in srgb,var(--swatch--brand-500,#ff6a3d) 24%,transparent),transparent 70%)}" +
     ".bc-tk_streak{position:absolute;left:50%;bottom:0;width:2px;height:100vh;margin-left:-1px;transform-origin:50% 100%;transform:scaleY(0);background:linear-gradient(0deg,transparent,color-mix(in srgb,var(--swatch--brand-500,#ff6a3d) 40%,transparent) 45%,var(--_light-field---apricot,#ffa27e))}" +
-    ".bc-tk_kite{position:absolute;left:50%;top:0;width:3.25rem;height:5.4rem;margin:-3.3rem 0 0 -1.625rem;overflow:visible;fill:var(--swatch--brand-500,#ff6a3d)}" +
-    "@media (max-width:767px){.bc-tk_kite{width:2.5rem;height:4.15rem;margin:-2.55rem 0 0 -1.25rem}}";
+    ".bc-tk svg.bc-tk_kite{position:absolute;left:50%;top:0;width:3.25rem;height:5.4rem;margin:-3.3rem 0 0 -1.625rem;overflow:visible;fill:var(--swatch--brand-500,#ff6a3d)}" +
+    "@media (max-width:767px){.bc-tk svg.bc-tk_kite{width:2.5rem;height:4.15rem;margin:-2.55rem 0 0 -1.25rem}}";
   document.head.appendChild(s);
 }
 
@@ -292,8 +294,8 @@ function initFirstVisitIntro() {
   css.textContent =
     ".bc-intro_wrap{position:fixed;inset:0;z-index:2147483001;pointer-events:auto;background:var(--swatch--dark-900,#0a0e22);display:flex;align-items:center;justify-content:center}" +
     ".bc-intro_wrap::before{content:\"\";position:absolute;inset:0;background:radial-gradient(48% 40% at 86% 56%,color-mix(in srgb,var(--swatch--brand-500,#ff6a3d) 22%,transparent),transparent 75%),radial-gradient(50% 45% at 6% 6%,color-mix(in srgb,var(--swatch--violet,#7b5cd6) 14%,transparent),transparent 72%)}" +
-    ".bc-intro_svg{position:relative;width:min(70vw,34rem);height:auto;overflow:visible}" +
-    ".bc-intro_cap{position:absolute;left:0;top:100%;width:100%;display:block;margin-top:-1px;fill:var(--swatch--dark-900,#0a0e22)}" +
+    ".bc-intro_wrap svg.bc-intro_svg{position:relative;width:min(70vw,34rem);height:auto;overflow:visible}" +
+    ".bc-intro_wrap svg.bc-intro_cap{position:absolute;left:0;top:100%;width:100%;display:block;margin-top:-1px;fill:var(--swatch--dark-900,#0a0e22)}" +
     ".bc-intro_letter{fill:var(--swatch--light-200,#f2f1ec)}.bc-intro_word{fill:#dcd9d3}.bc-intro_kite{fill:var(--swatch--brand-500,#ff6a3d)}";
   document.head.appendChild(css);
 
