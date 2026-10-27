@@ -750,21 +750,74 @@ function initCardSpot(scope) {
   });
 }
 
+// Client accent colours. Each project can carry its own brand colour from
+// the CMS. Very dark brand colours (a black, say) would vanish on the dark
+// site, so they are lifted towards Bone until they read clearly against
+// Midnight (4.5:1). --accent gets the readable colour every style uses,
+// --accent-brand keeps the exact hex. Returns null for anything that isn't a hex.
+function accentColours(raw) {
+  const v = (raw || "").trim().replace(/^#/, "");
+  if (!/^([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v)) return null;
+  const full = v.length === 3 ? v.split("").map(c => c + c).join("") : v;
+  const rgb = [0, 2, 4].map(i => parseInt(full.slice(i, i + 2), 16));
+  const lum = c => {
+    const l = c.map(x => { x /= 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); });
+    return 0.2126 * l[0] + 0.7152 * l[1] + 0.0722 * l[2];
+  };
+  const night = lum([10, 14, 34]), bone = [242, 241, 236];
+  let ui = rgb, t = 0;
+  while ((lum(ui) + 0.05) / (night + 0.05) < 4.5 && t < 1) {
+    t = Math.min(1, t + 0.05);
+    ui = rgb.map((x, i) => Math.round(x + (bone[i] - x) * t));
+  }
+  const hex = c => "#" + c.map(x => x.toString(16).padStart(2, "0")).join("");
+  return { brand: hex(rgb), ui: hex(ui), lifted: t > 0 };
+}
+function applyAccent(el, raw) {
+  const a = accentColours(raw);
+  if (!a) return;
+  el.style.setProperty("--accent", a.ui);
+  el.style.setProperty("--accent-brand", a.brand);
+  if (a.lifted) el.setAttribute("data-accent-lifted", "");
+}
+
 // Project cards on the Projects index (CMS list).
-// Accent: sets --accent from the CMS hex so the cover, dot and hover pick up
-// the client's colour. Empty keeps Brecon orange.
+// Accent: sets --accent from the CMS hex (see accentColours) so the cover, dot
+// and hover pick up the client's colour. Empty keeps Brecon orange.
 // Link: the Webflow API can't point a list item at its own page, so the card
 // carries its slug and this sets the href (same pattern as Next project).
 function initProjectCards(scope) {
   scope.querySelectorAll("[data-card-spot][data-accent]").forEach(card => {
-    const accent = (card.getAttribute("data-accent") || "").trim();
-    if (!/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.test(accent)) return;
-    card.style.setProperty("--accent", accent.charAt(0) === "#" ? accent : "#" + accent);
+    applyAccent(card, card.getAttribute("data-accent"));
   });
   scope.querySelectorAll("a[data-project-slug]").forEach(link => {
     const slug = (link.getAttribute("data-project-slug") || "").trim();
     if (/^[a-z0-9-]+$/i.test(slug)) link.setAttribute("href", "/projects/" + slug);
+  });  fitTitleUnderlines(scope);
+}
+
+// A title that wraps is as wide as its column, so its hover underline would
+// run past the words. This narrows each title to its longest line, and again
+// after fonts load and on resize.
+let titleFitBound = false;
+function fitTitleUnderlines(scope) {
+  if (!scope.querySelector(".projects_card_title")) return;
+  const fit = () => document.querySelectorAll(".projects_card_title").forEach(t => {
+    t.style.width = "";
+    const range = document.createRange();
+    range.selectNodeContents(t);
+    const left = t.getBoundingClientRect().left;
+    let widest = 0;
+    for (const r of range.getClientRects()) widest = Math.max(widest, r.right - left);
+    if (widest > 0) t.style.width = Math.ceil(widest + 1) + "px";
   });
+  fit();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+  if (!titleFitBound) {
+    titleFitBound = true;
+    let timer;
+    window.addEventListener("resize", () => { clearTimeout(timer); timer = setTimeout(fit, 150); });
+  }
 }
 
 // Magnetic call to action
@@ -889,10 +942,7 @@ function initCaseIntro(scope) {
   const root = scope === document ? document.documentElement : scope;
 
   // Accent colour from the CMS (hex). Empty keeps Brecon orange.
-  const accent = (hero.getAttribute("data-accent") || "").trim();
-  if (/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.test(accent)) {
-    root.style.setProperty("--accent", accent.charAt(0) === "#" ? accent : "#" + accent);
-  }
+  applyAccent(root, hero.getAttribute("data-accent"));
 
   // Call to action starts hidden, with no fade on the way out
   const cta = scope.querySelector("[data-case-cta]");
