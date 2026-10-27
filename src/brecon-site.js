@@ -14,6 +14,9 @@
 "use strict";
 
 function run() {
+// Cookie consent works even if the animation libraries fail to load
+try { initConsent(); } catch (e) {}
+
 if (!window.gsap || !window.barba) return;
 
 // Tells the head code the script is running, so content it hides until
@@ -285,12 +288,18 @@ const LOGO_LETTERS = ["M162.79,53.52c3.96-1.85,6.65-5.52,6.65-9.73,0-6.26-5.91-1
 const LOGO_CREATIVE = [["path", "d", "M210.43,122.81c-.44.47-.97.71-1.58.71-.58,0-1.07-.18-1.46-.54-.39-.36-.69-.88-.89-1.56-.2-.68-.3-1.51-.3-2.48s.1-1.82.3-2.51c.2-.68.5-1.21.89-1.57.39-.36.88-.54,1.46-.54s1.07.22,1.49.65.72,1.06.88,1.89l1.85-.1c-.24-1.29-.73-2.3-1.47-3.01-.75-.72-1.66-1.08-2.75-1.08-.96,0-1.78.26-2.45.77-.67.51-1.18,1.23-1.52,2.16s-.52,2.04-.52,3.33.17,2.39.52,3.32.86,1.65,1.52,2.16c.67.5,1.48.76,2.45.76,1.16,0,2.11-.38,2.86-1.15.75-.76,1.23-1.83,1.43-3.2l-1.83-.08c-.15.91-.44,1.6-.88,2.07Z"], ["path", "d", "M224.84,119.84c-.28-.24-.68-.4-1.16-.48.23-.07.46-.17.67-.3.41-.25.74-.59.99-1.03.25-.44.38-.94.38-1.52,0-1.1-.36-1.97-1.09-2.61-.72-.64-1.72-.96-2.99-.96h-3.72v11.96h1.77v-4.66h2.09c.49,0,.88.05,1.16.15.28.1.49.27.62.51s.22.55.25.94l.27,3.06h1.77l-.3-3.4c-.07-.76-.31-1.32-.72-1.66ZM221.61,118.59h-1.92v-3.97h1.92c.74,0,1.31.17,1.7.51.39.34.59.83.59,1.47s-.2,1.12-.59,1.46c-.39.35-.96.52-1.7.52Z"], ["polygon", "points", "233.1 119.71 238.47 119.71 238.47 118.1 233.1 118.1 233.1 114.61 238.67 114.61 238.67 112.94 231.33 112.94 231.33 124.9 238.8 124.9 238.8 123.23 233.1 123.23 233.1 119.71"], ["path", "d", "M246.8,112.94l-3.5,11.96h1.83l.87-3.12h3.89l.87,3.12h1.83l-3.5-11.96h-2.29ZM246.45,120.15l1.49-5.37,1.49,5.37h-2.98Z"], ["polygon", "points", "256.62 114.61 260.12 114.61 260.12 124.9 261.87 124.9 261.87 114.61 265.37 114.61 265.37 112.94 256.62 112.94 256.62 114.61"], ["polygon", "points", "270.31 114.61 273.17 114.61 273.17 123.23 270.31 123.23 270.31 124.9 277.78 124.9 277.78 123.23 274.92 123.23 274.92 114.61 277.78 114.61 277.78 112.94 270.31 112.94 270.31 114.61"], ["polygon", "points", "287.1 122.52 284.37 112.94 282.5 112.94 286.05 124.9 288.14 124.9 291.69 112.94 289.82 112.94 287.1 122.52"], ["polygon", "points", "298.34 123.23 298.34 119.71 303.71 119.71 303.71 118.1 298.34 118.1 298.34 114.61 303.92 114.61 303.92 112.94 296.57 112.94 296.57 124.9 304.05 124.9 304.05 123.23 298.34 123.23"]];
 const KITE_CURVE_DOWN = "M0,0 C116,37 347,143 500,143 C653,143 884,37 1000,0 Z";
 
+// Lets the cookie banner wait until the intro has lifted
+function introDone() {
+  window.bcIntroDone = true;
+  document.dispatchEvent(new Event("bc:intro-done"));
+}
+
 function initFirstVisitIntro() {
   const html = document.documentElement;
   if (!html.classList.contains("bc-intro")) return;
   window.bcIntroStarted = true;
   try { localStorage.setItem("bc-intro-seen", "1"); } catch (e) {}
-  if (inWebflowEditor() || reducedMotion) { html.classList.remove("bc-intro"); return; }
+  if (inWebflowEditor() || reducedMotion) { html.classList.remove("bc-intro"); introDone(); return; }
 
   const css = document.createElement("style");
   css.textContent =
@@ -382,6 +391,7 @@ function initFirstVisitIntro() {
     off();
     wrap.remove();
     css.remove();
+    introDone();
     if (lenis && typeof lenis.start === "function") lenis.start();
     if (hasScrollTrigger) ScrollTrigger.refresh();
   }
@@ -1445,6 +1455,165 @@ function initJournal(scope) {
     item.style.display = hide ? "none" : "flex"; // inline, so it wins over the stylesheet
     if (!hide) shown++;
   });
+}
+
+// -----------------------------------------
+// COOKIE CONSENT
+// UK GDPR and PECR: Google Analytics is the only non-essential cookie on the
+// site, so nothing from Google loads until someone clicks Accept. Accept and
+// Reject carry equal weight, closing or ignoring the banner counts as no, and
+// "Cookie settings" (any element with data-cookie-settings) reopens it so
+// people can change their mind as easily as they gave it. Rejecting after
+// accepting deletes the _ga cookies and reloads so Analytics stops at once.
+//
+// The choice lives in a first party cookie, bc_consent, for 6 months, then
+// we ask again. It's strictly necessary, so it needs no consent itself.
+//
+// To switch Analytics on, set window.BC_ANALYTICS_ID = "G-XXXXXXX" in the
+// head code. Until then the banner stays hidden, because there's nothing to
+// ask about. Add ?consent to any URL to preview it.
+// -----------------------------------------
+function readConsent() {
+  const m = document.cookie.match(/(?:^|;\s*)bc_consent=(granted|denied)/);
+  return m ? m[1] : null;
+}
+
+function writeConsent(value) {
+  // About 6 months, then we ask again
+  document.cookie = "bc_consent=" + value + "; Max-Age=" + (60 * 60 * 24 * 182) + "; Path=/; SameSite=Lax" + (location.protocol === "https:" ? "; Secure" : "");
+}
+
+function loadAnalytics() {
+  const id = (window.BC_ANALYTICS_ID || "").trim();
+  if (!/^G-[A-Z0-9]+$/i.test(id) || window.bcAnalyticsLoaded) return;
+  window.bcAnalyticsLoaded = true;
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function () { window.dataLayer.push(arguments); };
+  // Consent Mode v2: analytics only. Advertising signals stay off for good.
+  gtag("consent", "default", { analytics_storage: "granted", ad_storage: "denied", ad_user_data: "denied", ad_personalization: "denied" });
+  gtag("js", new Date());
+  gtag("config", id, { allow_google_signals: false, allow_ad_personalization_signals: false });
+  const s = document.createElement("script");
+  s.async = true;
+  s.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(id);
+  document.head.appendChild(s);
+}
+
+// Google sets _ga cookies on the widest domain it can, so try every level
+function clearAnalyticsCookies() {
+  const parts = location.hostname.split(".");
+  const domains = [""];
+  for (let i = 0; i < parts.length - 1; i++) {
+    const d = parts.slice(i).join(".");
+    domains.push(d, "." + d);
+  }
+  document.cookie.split(/;\s*/).forEach(c => {
+    const name = c.split("=")[0];
+    if (!/^(_ga|_gid|_gat)/.test(name)) return;
+    domains.forEach(d => { document.cookie = name + "=; Max-Age=0; Path=/" + (d ? "; Domain=" + d : ""); });
+  });
+}
+
+function initConsent() {
+  // Runs before everything else, so it uses its own Editor check
+  const inEditor = !!(window.Webflow && Webflow.env && Webflow.env("editor"));
+  if (inEditor || window.bcConsentReady) return;
+  window.bcConsentReady = true;
+
+  const choice = readConsent();
+  if (choice === "granted") loadAnalytics();
+  else clearAnalyticsCookies();
+
+  const enabled = /^G-[A-Z0-9]+$/i.test((window.BC_ANALYTICS_ID || "").trim());
+  const preview = /[?&]consent(=|&|$)/.test(location.search);
+
+  const css = document.createElement("style");
+  css.textContent =
+    ".bc-consent{position:fixed;left:1rem;bottom:1rem;z-index:2147482000;display:flex;flex-direction:column;gap:.875rem;width:min(26rem,calc(100vw - 2rem));padding:1.25rem;border:1px solid color-mix(in srgb,var(--swatch--light-200,#f2f1ec) 16%,transparent);border-radius:1rem;background:color-mix(in srgb,var(--swatch--dark-900,#0a0e22) 84%,transparent);-webkit-backdrop-filter:blur(1.25rem) saturate(140%);backdrop-filter:blur(1.25rem) saturate(140%);box-shadow:inset 0 1px 0 color-mix(in srgb,var(--swatch--light-200,#f2f1ec) 14%,transparent),0 1.5rem 4rem color-mix(in srgb,var(--swatch--dark-900,#0a0e22) 55%,transparent);color:var(--swatch--light-200,#f2f1ec);font-family:var(--_typography---font--primary-family,inherit);opacity:0;transform:translateY(1rem);transition:opacity 400ms ease,transform 600ms cubic-bezier(.16,1,.3,1)}" +
+    ".bc-consent[hidden]{display:none}.bc-consent.is-visible{opacity:1;transform:none}" +
+    ".bc-consent_label{display:flex;align-items:center;gap:.625rem;margin:0;font-family:var(--_typography---font--mono-family,monospace);font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:color-mix(in srgb,var(--swatch--light-200,#f2f1ec) 72%,transparent)}" +
+    ".bc-consent_label::before{content:\"\";width:.5rem;height:.5rem;border-radius:50%;background:var(--swatch--brand-500,#ff6a3d);box-shadow:0 0 .5rem color-mix(in srgb,var(--swatch--brand-500,#ff6a3d) 60%,transparent)}" +
+    ".bc-consent_text{margin:0;font-size:.9375rem;line-height:1.5;color:color-mix(in srgb,var(--swatch--light-200,#f2f1ec) 88%,transparent)}" +
+    ".bc-consent_status{margin:0;font-size:.8125rem;line-height:1.4;color:color-mix(in srgb,var(--swatch--light-200,#f2f1ec) 72%,transparent)}.bc-consent_status:empty{display:none}" +
+    ".bc-consent_actions{display:flex;gap:.625rem}" +
+    ".bc-consent_btn{flex:1 1 0;min-height:2.75rem;padding:.625rem 1rem;border:1px solid color-mix(in srgb,var(--swatch--light-200,#f2f1ec) 30%,transparent);border-radius:100vw;background:color-mix(in srgb,var(--swatch--light-200,#f2f1ec) 8%,transparent);color:var(--swatch--light-200,#f2f1ec);font:inherit;font-size:.9375rem;font-weight:500;line-height:1.2;cursor:pointer;transition:border-color 300ms ease,background-color 300ms ease}" +
+    ".bc-consent_btn[aria-pressed=true]{border-color:var(--swatch--brand-500,#ff6a3d)}" +
+    ".bc-consent_btn:focus-visible,.bc-consent_link:focus-visible{outline:2px solid var(--swatch--light-200,#f2f1ec);outline-offset:3px}" +
+    "@media (hover:hover){.bc-consent_btn:hover{border-color:var(--swatch--brand-500,#ff6a3d);background:color-mix(in srgb,var(--swatch--brand-500,#ff6a3d) 14%,transparent)}.bc-consent_link:hover{color:var(--swatch--light-200,#f2f1ec)}}" +
+    ".bc-consent_link{align-self:flex-start;font-size:.8125rem;color:color-mix(in srgb,var(--swatch--light-200,#f2f1ec) 80%,transparent);text-decoration:underline;text-decoration-color:var(--swatch--brand-500,#ff6a3d);text-underline-offset:.3em}" +
+    ":where(button[data-cookie-settings]){appearance:none;-webkit-appearance:none;margin:0;padding:0;border:0;background:none;font:inherit;color:inherit;letter-spacing:inherit;text-transform:inherit;cursor:pointer;text-align:left}" +
+    "@media (max-width:479px){.bc-consent{left:.75rem;right:.75rem;bottom:.75rem;width:auto}}" +
+    "@media (prefers-reduced-motion:reduce){.bc-consent{transition:none;transform:none}}";
+  document.head.appendChild(css);
+
+  const box = document.createElement("section");
+  box.className = "bc-consent";
+  box.hidden = true;
+  box.setAttribute("aria-labelledby", "bc-consent-label");
+  box.setAttribute("aria-describedby", "bc-consent-text");
+  box.innerHTML =
+    '<p class="bc-consent_label" id="bc-consent-label">Cookies</p>' +
+    '<p class="bc-consent_text" id="bc-consent-text">Can we use Google Analytics cookies to see how people use this site? It helps us make it better. We never use advertising cookies.</p>' +
+    '<p class="bc-consent_status" aria-live="polite"></p>' +
+    '<div class="bc-consent_actions">' +
+      '<button type="button" class="bc-consent_btn" data-consent-choice="granted">Accept</button>' +
+      '<button type="button" class="bc-consent_btn" data-consent-choice="denied">Reject</button>' +
+    "</div>" +
+    '<a class="bc-consent_link" href="/cookies">Read our cookie policy</a>';
+  // First in the page, so keyboard and screen reader users meet it straight away
+  document.body.insertBefore(box, document.body.firstChild);
+  const status = box.querySelector(".bc-consent_status");
+  let returnFocus = null;
+
+  const show = (fromSettings) => {
+    const now = readConsent();
+    status.textContent = now === "granted" ? "Analytics cookies are on." : now === "denied" ? "Analytics cookies are off." : "";
+    box.querySelectorAll("[data-consent-choice]").forEach(b => b.setAttribute("aria-pressed", String(b.getAttribute("data-consent-choice") === now)));
+    box.hidden = false;
+    requestAnimationFrame(() => box.classList.add("is-visible"));
+    if (fromSettings) box.querySelector("[data-consent-choice]").focus();
+  };
+  const hide = () => {
+    box.classList.remove("is-visible");
+    box.hidden = true;
+    if (returnFocus && document.contains(returnFocus)) returnFocus.focus();
+    returnFocus = null;
+  };
+
+  box.addEventListener("click", e => {
+    const btn = e.target.closest("[data-consent-choice]");
+    if (!btn) return;
+    const value = btn.getAttribute("data-consent-choice");
+    const was = readConsent();
+    writeConsent(value);
+    if (value === "granted") { loadAnalytics(); hide(); return; }
+    clearAnalyticsCookies();
+    // Analytics was running on this page: reload so it stops completely
+    if (was === "granted" && window.bcAnalyticsLoaded) { location.reload(); return; }
+    hide();
+  });
+  box.addEventListener("keydown", e => {
+    // Escape closes it without making a choice, which counts as no
+    if (e.key === "Escape") { e.preventDefault(); hide(); }
+  });
+
+  // Cookie settings links anywhere on the site, including after page transitions
+  document.addEventListener("click", e => {
+    const trigger = e.target.closest("[data-cookie-settings]");
+    if (!trigger) return;
+    e.preventDefault();
+    returnFocus = trigger;
+    show(true);
+  });
+
+  if (!((enabled && !choice) || preview)) return;
+  // Wait for the first visit intro to lift before asking
+  const html = document.documentElement;
+  if (window.bcIntroDone || !html.classList.contains("bc-intro")) { show(false); return; }
+  let done = false;
+  const go = () => { if (done) return; done = true; show(false); };
+  document.addEventListener("bc:intro-done", go, { once: true });
+  setTimeout(go, 9000);
 }
 
 // -----------------------------------------
