@@ -922,7 +922,8 @@ function initRail(scope) {
 
 // Scroll reveals. Content already in the first screen is left alone so
 // nothing flickers during a page transition. Without JavaScript nothing
-// is hidden.
+// is hidden. Fades use opacity, not visibility, so content waiting to
+// reveal stays in the accessibility tree for screen reader users.
 function initReveal(scope) {
   if (reducedMotion || !hasScrollTrigger) return;
   const containerTop = scope === document ? 0 : scope.getBoundingClientRect().top;
@@ -932,8 +933,8 @@ function initReveal(scope) {
     const top = el.getBoundingClientRect().top - containerTop;
     if (top < window.innerHeight * 0.9) return;
     gsap.fromTo(el,
-      { autoAlpha: 0, y: "2rem" },
-      { autoAlpha: 1, y: 0, duration: 0.9, ease: "glide",
+      { opacity: 0, y: "2rem" },
+      { opacity: 1, y: 0, duration: 0.9, ease: "glide",
         scrollTrigger: { trigger: el, start: "top 92%", once: true } });
   });
 }
