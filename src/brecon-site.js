@@ -1108,13 +1108,21 @@ function initCase(scope) {
   ScrollTrigger.create({ trigger: next, start: "top bottom", once: true,
     onEnter: () => { if (typeof barba.prefetch === "function") barba.prefetch(href); } });
 
-  gsap.set(media, { clipPath: "inset(12% 6% 12% 6% round 2rem)" });
+  // The frame grows from an inset card to full bleed. Each edge and the
+  // corner radius are tweened as plain numbers and written back as one
+  // clip-path, because browsers shorten "inset(12% 6% 12% 6%)" to
+  // "inset(12% 6%)" and a string tween then pairs the wrong values.
+  const frame = { y: 12, x: 6, r: 2 };
+  const drawFrame = () => {
+    media.style.clipPath = `inset(${frame.y}% ${frame.x}% ${frame.y}% ${frame.x}% round ${frame.r}rem)`;
+  };
+  drawFrame();
   gsap.set(content, { y: "3rem", autoAlpha: 0.35 });
   gsap.timeline({
     scrollTrigger: { trigger: next, start: "top top", end: "bottom bottom", scrub: true,
       onUpdate: self => { if (self.progress > 0.995) go(); } }
   })
-    .to(media, { clipPath: "inset(0% 0% 0% 0% round 0rem)", ease: "none" }, 0)
+    .to(frame, { y: 0, x: 0, r: 0, ease: "sine.inOut", onUpdate: drawFrame }, 0)
     .to(content, { y: 0, autoAlpha: 1, ease: "none" }, 0)
     .fromTo(fill, { scaleX: 0 }, { scaleX: 1, ease: "none" }, 0);
 }
