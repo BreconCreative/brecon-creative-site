@@ -92,6 +92,7 @@ function initAfterEnterFunctions(next) {
   if (has("[data-count-up]")) initCountUp(nextPage);
   if (has("[data-projects-rail]")) initRail(nextPage);
   if (has("[data-case-hero]")) initCase(nextPage);
+  if (has("[data-card-video]")) initCardReels(nextPage);
   if (has("[data-contact]")) initContact(nextPage);
   if (has("details[data-accordion]")) initAccordion(nextPage);
   if (has("[data-not-found]")) initNotFound(nextPage);
@@ -1194,25 +1195,9 @@ function initReel(v, src, isHls) {
     '<svg class="bc-reel-play" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 4.5v15a1 1 0 0 0 1.5.9l12-7.5a1 1 0 0 0 0-1.8l-12-7.5A1 1 0 0 0 7 4.5Z" fill="currentColor"/></svg>';
   host.appendChild(btn);
 
-  let hls = null, attached = null, userPaused = false, inView = false;
-
-  const attach = () => {
-    if (attached) return attached;
-    if (!isHls) return (attached = Promise.resolve());
-    const native = !!v.canPlayType("application/vnd.apple.mpegurl");
-    // Safari with Managed Media Source plays HLS best on its own
-    if (native && "ManagedMediaSource" in window) { v.src = src; return (attached = Promise.resolve()); }
-    attached = loadHls().then(Hls => {
-      if (!document.contains(v)) return;
-      if (Hls.isSupported()) {
-        hls = new Hls({ maxBufferLength: 10, capLevelToPlayerSize: true });
-        hls.on(Hls.Events.ERROR, (e, d) => { if (d && d.fatal && hls) { hls.destroy(); hls = null; } });
-        hls.loadSource(src);
-        hls.attachMedia(v);
-      } else if (native) v.src = src;
-    }).catch(() => { if (v.canPlayType("application/vnd.apple.mpegurl")) v.src = src; });
-    return attached;
-  };
+  let userPaused = false, inView = false;
+  const stream = streamInto(v, src, isHls);
+  const attach = stream.attach;
 
   const play = () => {
     if (userPaused || !inView) return;
@@ -1255,10 +1240,90 @@ function initReel(v, src, isHls) {
     destroy: () => {
       if (io) io.disconnect();
       if (near) near.disconnect();
-      if (hls) { try { hls.destroy(); } catch (e) {} hls = null; }
-      try { v.pause(); v.removeAttribute("src"); v.load(); } catch (e) {}
+      stream.destroy();
       btn.remove();
     }
+  });
+}
+
+// Connects a video to its source the first time it's needed. HLS plays
+// natively in Safari, through hls.js elsewhere. Returns attach and destroy.
+function streamInto(v, src, isHls) {
+  let hls = null, attached = null;
+  const attach = () => {
+    if (attached) return attached;
+    if (!isHls) {
+      if (!v.getAttribute("src")) v.src = src;
+      return (attached = Promise.resolve());
+    }
+    const native = !!v.canPlayType("application/vnd.apple.mpegurl");
+    // Safari with Managed Media Source plays HLS best on its own
+    if (native && "ManagedMediaSource" in window) { v.src = src; return (attached = Promise.resolve()); }
+    attached = loadHls().then(Hls => {
+      if (!document.contains(v)) return;
+      if (Hls.isSupported()) {
+        hls = new Hls({ maxBufferLength: 10, capLevelToPlayerSize: true });
+        hls.on(Hls.Events.ERROR, (e, d) => { if (d && d.fatal && hls) { hls.destroy(); hls = null; } });
+        hls.loadSource(src);
+        hls.attachMedia(v);
+      } else if (native) v.src = src;
+    }).catch(() => { if (v.canPlayType("application/vnd.apple.mpegurl")) v.src = src; });
+    return attached;
+  };
+  const destroy = () => {
+    if (hls) { try { hls.destroy(); } catch (e) {} hls = null; }
+    try { v.pause(); v.removeAttribute("src"); v.load(); } catch (e) {}
+  };
+  return { attach, destroy };
+}
+
+// Homepage project cards: the case study reel plays while the pointer is
+// over the card (or it has keyboard focus), and pauses when it leaves.
+// Touch screens, reduced motion and data saver keep the still image.
+function initCardReels(scope) {
+  const saveData = navigator.connection && navigator.connection.saveData;
+  if (!fineMQ.matches || reducedMotion || saveData) return;
+  if (!document.getElementById("bc-card-reel-style")) {
+    const s = document.createElement("style");
+    s.id = "bc-card-reel-style";
+    s.textContent =
+      ".bc-card-reel{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .6s ease;pointer-events:none}" +
+      ".bc-card-reel.is-playing{opacity:1}";
+    document.head.appendChild(s);
+  }
+  scope.querySelectorAll("[data-card-video]").forEach(media => {
+    const src = (media.getAttribute("data-card-video") || "").trim();
+    if (!src || media.querySelector(".bc-card-reel")) return;
+    const card = media.closest("a[href]") || media;
+    const v = document.createElement("video");
+    v.className = "bc-card-reel";
+    v.muted = true; v.loop = true; v.playsInline = true; v.preload = "none";
+    v.setAttribute("muted", "");
+    v.setAttribute("playsinline", "");
+    v.setAttribute("aria-hidden", "true");
+    v.setAttribute("tabindex", "-1");
+    if (typeof v.disableRemotePlayback !== "undefined") v.disableRemotePlayback = true;
+    // Above the main image, below the inset image and labels
+    const img = media.querySelector("img");
+    if (img) img.after(v); else media.prepend(v);
+
+    const stream = streamInto(v, src, /\.m3u8(\?|#|$)/i.test(src));
+    let active = false;
+    const start = () => {
+      active = true;
+      stream.attach().then(() => {
+        if (!active || !document.contains(v)) return;
+        const p = v.play();
+        if (p && p.catch) p.catch(() => {});
+      });
+    };
+    const stop = () => { active = false; v.pause(); v.classList.remove("is-playing"); };
+    v.addEventListener("playing", () => { if (active) v.classList.add("is-playing"); });
+    card.addEventListener("pointerenter", start);
+    card.addEventListener("pointerleave", stop);
+    card.addEventListener("focusin", start);
+    card.addEventListener("focusout", stop);
+    caseReels.push({ video: v, destroy: () => { stop(); stream.destroy(); } });
   });
 }
 
