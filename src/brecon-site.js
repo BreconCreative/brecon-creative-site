@@ -277,9 +277,10 @@ function buildTransitionKite(next, dur) {
 
 // -----------------------------------------
 // FIRST VISIT INTRO
-// The logo animation plays once, on someone's first visit, then never again.
-// The head code adds html.bc-intro before first paint (only when this
-// browser has no record of a visit and motion is allowed), which covers the
+// The logo animation plays on someone's first visit of each day, then not
+// again until the next day. The head code adds html.bc-intro before first
+// paint (only when this browser has no visit recorded today and motion is
+// allowed), which covers the
 // page in Midnight so nothing flashes. This builds the intro over that cover,
 // plays it, then lifts it away with the kite's wing curve on its lower edge.
 // Any click, key, scroll or touch skips straight to the lift.
@@ -299,7 +300,8 @@ function initFirstVisitIntro() {
   const html = document.documentElement;
   if (!html.classList.contains("bc-intro")) return;
   window.bcIntroStarted = true;
-  try { localStorage.setItem("bc-intro-seen", "1"); } catch (e) {}
+  // Stores today's date, so the intro plays on the first visit of each day
+  try { localStorage.setItem("bc-intro-seen", window.bcIntroDay || "1"); } catch (e) {}
   if (inWebflowEditor() || reducedMotion) { html.classList.remove("bc-intro"); introDone(); return; }
 
   const css = document.createElement("style");
