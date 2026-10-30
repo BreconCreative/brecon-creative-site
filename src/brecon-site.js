@@ -1289,7 +1289,9 @@ function initCardReels(scope) {
     const s = document.createElement("style");
     s.id = "bc-card-reel-style";
     s.textContent =
-      ".bc-card-reel{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .8s ease;pointer-events:none}" +
+      // 1px overlap on every side, so no hairline of the image underneath shows
+      // where the card lands on a fraction of a pixel
+      ".bc-card-reel{position:absolute;top:-1px;left:-1px;width:calc(100% + 2px);height:calc(100% + 2px);max-width:none;object-fit:cover;opacity:0;transition:opacity .8s ease;pointer-events:none}" +
       ".bc-card-reel.is-playing{opacity:1}";
     document.head.appendChild(s);
   }
