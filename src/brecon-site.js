@@ -1321,7 +1321,19 @@ function initCardReels(scope) {
         if (p && p.catch) p.catch(() => {});
       });
     };
-    v.addEventListener("playing", () => v.classList.add("is-playing"));
+    // Once the reel has faded in, hide the still and the card's pale fill behind
+    // it. Light layers under a rounded clip leave a faint halo on the edge.
+    let covered = false;
+    v.addEventListener("playing", () => {
+      v.classList.add("is-playing");
+      if (covered) return;
+      covered = true;
+      setTimeout(() => {
+        if (!document.contains(v)) return;
+        if (img) img.style.visibility = "hidden";
+        media.style.backgroundColor = "transparent";
+      }, 900);
+    });
 
     let io = null, near = null;
     if ("IntersectionObserver" in window) {
