@@ -81,6 +81,7 @@ function initBeforeEnterFunctions(next) {
   if (has("[data-price]")) initPricing(nextPage);
   if (has("[data-faq-order]")) initFaqOrder(nextPage);
   if (has("[data-journal-more]")) initJournal(nextPage);
+  if (has(".journal_card_tag")) initJournalCategories(nextPage);
   if (has("[data-reveal]")) initReveal(nextPage);
 }
 
@@ -1695,6 +1696,18 @@ function initJournal(scope) {
     const hide = (current && title && title.textContent.trim() === current) || shown >= 3;
     item.style.display = hide ? "none" : "flex"; // inline, so it wins over the stylesheet
     if (!hide) shown++;
+  });
+}
+
+// Each journal card cover takes its colours from its category. The category
+// label on the card sets data-category on the cover (e.g. "Webflow" becomes
+// webflow), and Journal Styles in Webflow holds a gradient for each one.
+// Runs before the page shows, so cards never change colour in view.
+function initJournalCategories(scope) {
+  scope.querySelectorAll(".journal_card_tag").forEach(tag => {
+    const media = tag.parentElement;
+    const name = tag.textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    if (media && name) media.dataset.category = name;
   });
 }
 
