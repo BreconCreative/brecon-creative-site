@@ -1279,32 +1279,18 @@ function streamInto(v, src, isHls) {
 
 // Homepage project cards: each card's reel plays muted on loop while the
 // card is on screen, to catch the eye, and pauses when it scrolls away.
-// One pause button in the section header stops them all (WCAG 2.2.2).
 // Reduced motion and data saver keep the still image.
 function initCardReels(scope) {
   const saveData = navigator.connection && navigator.connection.saveData;
   if (reducedMotion || saveData) return;
-  reelStyles();
   if (!document.getElementById("bc-card-reel-style")) {
     const s = document.createElement("style");
     s.id = "bc-card-reel-style";
     s.textContent =
       ".bc-card-reel{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .8s ease;pointer-events:none}" +
-      ".bc-card-reel.is-playing{opacity:1}" +
-      ".bc-reels-actions{display:flex;align-items:center;gap:1rem}" +
-      ".bc-reel-toggle.is-inline{position:relative;right:auto;bottom:auto;top:auto;flex-shrink:0}";
+      ".bc-card-reel.is-playing{opacity:1}";
     document.head.appendChild(s);
   }
-
-  const reels = [];
-  let allPaused = false;
-  let btn = null;
-
-  const sync = () => {
-    if (!btn) return;
-    btn.dataset.state = allPaused ? "paused" : "playing";
-    btn.setAttribute("aria-label", allPaused ? "Play project videos" : "Pause project videos");
-  };
 
   scope.querySelectorAll("[data-card-video]").forEach(media => {
     const src = (media.getAttribute("data-card-video") || "").trim();
@@ -1322,17 +1308,16 @@ function initCardReels(scope) {
     if (img) img.after(v); else media.prepend(v);
 
     const stream = streamInto(v, src, /\.m3u8(\?|#|$)/i.test(src));
-    const reel = { v, inView: false };
-    reel.play = () => {
-      if (allPaused || !reel.inView) return;
+    let inView = false;
+    const play = () => {
+      if (!inView) return;
       stream.attach().then(() => {
-        if (allPaused || !reel.inView || !document.contains(v)) return;
+        if (!inView || !document.contains(v)) return;
         const p = v.play();
         if (p && p.catch) p.catch(() => {});
       });
     };
-    v.addEventListener("playing", () => { v.classList.add("is-playing"); if (btn) btn.classList.add("is-ready"); });
-    reels.push(reel);
+    v.addEventListener("playing", () => v.classList.add("is-playing"));
 
     let io = null, near = null;
     if ("IntersectionObserver" in window) {
@@ -1341,44 +1326,17 @@ function initCardReels(scope) {
         { rootMargin: "0px 0px 50% 0px" });
       near.observe(media);
       io = new IntersectionObserver(entries => entries.forEach(e => {
-        reel.inView = e.isIntersecting;
-        if (reel.inView) reel.play(); else v.pause();
+        inView = e.isIntersecting;
+        if (inView) play(); else v.pause();
       }), { threshold: 0.35 });
       io.observe(media);
-    } else { reel.inView = true; reel.play(); }
+    } else { inView = true; play(); }
 
     caseReels.push({ video: v, destroy: () => {
       if (io) io.disconnect();
       if (near) near.disconnect();
       stream.destroy();
     } });
-  });
-
-  if (!reels.length) return;
-
-  // One pause button for all the cards, next to the section's header link
-  const section = reels[0].v.closest("section") || scope;
-  const header = section.querySelector(".projects_home_header");
-  const link = header && header.querySelector(":scope > a");
-  btn = document.createElement("button");
-  btn.type = "button";
-  btn.className = "bc-reel-toggle is-inline";
-  btn.innerHTML =
-    '<svg class="bc-reel-pause" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 5v14M16 5v14" fill="none" stroke="currentColor" stroke-width="3"/></svg>' +
-    '<svg class="bc-reel-play" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 4.5v15a1 1 0 0 0 1.5.9l12-7.5a1 1 0 0 0 0-1.8l-12-7.5A1 1 0 0 0 7 4.5Z" fill="currentColor"/></svg>';
-  if (link) {
-    const wrap = document.createElement("div");
-    wrap.className = "bc-reels-actions";
-    link.before(wrap);
-    wrap.append(btn, link);
-  } else {
-    section.appendChild(btn);
-  }
-  sync();
-  btn.addEventListener("click", () => {
-    allPaused = !allPaused;
-    reels.forEach(r => (allPaused ? r.v.pause() : r.play()));
-    sync();
   });
 }
 
