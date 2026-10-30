@@ -81,7 +81,7 @@ function initBeforeEnterFunctions(next) {
   if (has("[data-price]")) initPricing(nextPage);
   if (has("[data-faq-order]")) initFaqOrder(nextPage);
   if (has("[data-journal-more]")) initJournal(nextPage);
-  if (has(".journal_card_tag")) initJournalCategories(nextPage);
+  if (has(".journal_card_tag, .journal_article_hero")) initJournalCategories(nextPage);
   if (has("[data-reveal]")) initReveal(nextPage);
 }
 
@@ -1699,16 +1699,21 @@ function initJournal(scope) {
   });
 }
 
-// Each journal card cover takes its colours from its category. The category
-// label on the card sets data-category on the cover (e.g. "Webflow" becomes
-// webflow), and Journal Styles in Webflow holds a gradient for each one.
-// Runs before the page shows, so cards never change colour in view.
+// Journal covers and article heroes take their colours from the category.
+// The category label (on a card, or [data-journal-category] in an article's
+// meta line) sets data-category on the cover or hero, e.g. "Webflow" becomes
+// webflow. Journal Styles in Webflow holds the colours for each one. Runs
+// before the page shows, so nothing changes colour in view.
+function journalCategorySlug(el) {
+  return el ? el.textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") : "";
+}
 function initJournalCategories(scope) {
   scope.querySelectorAll(".journal_card_tag").forEach(tag => {
-    const media = tag.parentElement;
-    const name = tag.textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-    if (media && name) media.dataset.category = name;
+    const name = journalCategorySlug(tag);
+    if (tag.parentElement && name) tag.parentElement.dataset.category = name;
   });
+  const hero = scope.querySelector(".journal_article_hero");
+  if (hero) hero.dataset.category = journalCategorySlug(hero.querySelector("[data-journal-category]")) || "websites";
 }
 
 // -----------------------------------------
