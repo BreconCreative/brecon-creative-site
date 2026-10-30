@@ -511,6 +511,8 @@ if (!inWebflowEditor()) {
 
   barba.hooks.after(() => {
     isTransitioning = false;
+    // Stop streams from the page that just left
+    cleanupCaseReels();
   });
 
   barba.hooks.beforeEnter(data => {
@@ -999,12 +1001,18 @@ function initCase(scope) {
     a.setAttribute("rel", "noopener");
   });
 
-  // Reels: a Bunny direct MP4 plays muted on loop while in view. A Bunny
-  // embed URL becomes a background iframe. Empty fields leave the image.
+  // Reels play muted on loop while on screen, over the still image.
+  // Best: a Bunny HLS playlist (.m3u8). It streams in small chunks at the
+  // right quality for each screen. Safari plays it natively; other browsers
+  // load hls.js (light build) only when a reel is about to come into view.
+  // A direct MP4 still works, and a Bunny embed URL becomes an iframe.
+  // Each reel gets a pause button (WCAG 2.2.2). Reduced motion or data
+  // saver keeps the still image. Empty fields leave the image.
   const saveData = navigator.connection && navigator.connection.saveData;
   scope.querySelectorAll("video[data-case-video]").forEach(v => {
     const src = (v.getAttribute("src") || "").trim();
     if (!src || reducedMotion || saveData) { v.remove(); return; }
+    if (/\.m3u8(\?|#|$)/i.test(src)) { initReel(v, src, true); return; }
     if (/mediadelivery\.net\/(embed|play)\//.test(src)) {
       const u = new URL(src.replace("/play/", "/embed/"));
       ["autoplay", "loop", "muted", "preload"].forEach(k => u.searchParams.set(k, "true"));
@@ -1021,13 +1029,7 @@ function initCase(scope) {
       v.replaceWith(f);
       return;
     }
-    v.muted = true; v.loop = true; v.playsInline = true;
-    v.addEventListener("playing", () => v.classList.add("is-playing"), { once: true });
-    const play = () => { const p = v.play(); if (p && p.catch) p.catch(() => {}); };
-    if ("IntersectionObserver" in window) {
-      new IntersectionObserver(entries => entries.forEach(e => (e.isIntersecting ? play() : v.pause())),
-        { threshold: 0.1 }).observe(v.parentElement || v);
-    } else play();
+    initReel(v, src, false);
   });
 
   // Count-up figures read from the CMS text, e.g. 73.5M, 87%, 24/7
@@ -1116,6 +1118,150 @@ function initCase(scope) {
 // Contact page: live studio clock, the step by step project brief with its
 // written summary, the reply-by date, the sent state and the Cal.com booking
 // calendar. Without JavaScript the form still works as one long form.
+// -----------------------------------------
+// CASE STUDY REELS
+// -----------------------------------------
+
+// hls.js light build: HLS playback for browsers without it built in.
+// Pinned with an integrity hash, loaded once and only when a reel needs it.
+const HLS_SRC = "https://cdn.jsdelivr.net/npm/hls.js@1.6.19/dist/hls.light.min.js";
+const HLS_SRI = "sha384-iLLNHt3V/kPmTJ59eKPOjc+6Qf/z6IObViLeySBT6dkvUuCbmRSU82tfSlI2meV0";
+let hlsLoading = null;
+function loadHls() {
+  if (window.Hls) return Promise.resolve(window.Hls);
+  if (!hlsLoading) {
+    hlsLoading = new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = HLS_SRC;
+      s.integrity = HLS_SRI;
+      s.crossOrigin = "anonymous";
+      s.async = true;
+      s.onload = () => (window.Hls ? resolve(window.Hls) : reject());
+      s.onerror = () => { hlsLoading = null; reject(); };
+      document.head.appendChild(s);
+    });
+  }
+  return hlsLoading;
+}
+
+// Reels on the page, so a page transition can stop their streams
+const caseReels = [];
+function cleanupCaseReels() {
+  for (let i = caseReels.length - 1; i >= 0; i--) {
+    if (!document.contains(caseReels[i].video)) {
+      caseReels[i].destroy();
+      caseReels.splice(i, 1);
+    }
+  }
+}
+
+function reelStyles() {
+  if (document.getElementById("bc-reel-style")) return;
+  const s = document.createElement("style");
+  s.id = "bc-reel-style";
+  s.textContent =
+    ".bc-reel-toggle{position:absolute;right:1.25rem;bottom:1.25rem;z-index:3;width:2.75rem;height:2.75rem;padding:0;margin:0;display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid color-mix(in srgb,#F2F1EC 22%,transparent);background-color:color-mix(in srgb,#0A0E22 45%,transparent);-webkit-backdrop-filter:blur(1rem);backdrop-filter:blur(1rem);color:#F2F1EC;cursor:pointer;opacity:0;visibility:hidden;transition:opacity .4s ease,visibility .4s ease,background-color .3s ease}" +
+    ".bc-reel-toggle.is-ready{opacity:1;visibility:visible}" +
+    ".bc-reel-toggle:hover{background-color:color-mix(in srgb,#0A0E22 70%,transparent)}" +
+    ".bc-reel-toggle:focus-visible{outline:2px solid #F2F1EC;outline-offset:3px}" +
+    ".bc-reel-toggle svg{width:1rem;height:1rem;display:block}" +
+    ".bc-reel-toggle .bc-reel-play,.bc-reel-toggle[data-state=paused] .bc-reel-pause{display:none}" +
+    ".bc-reel-toggle[data-state=paused] .bc-reel-play{display:block}" +
+    ".case_hero_wrap>.bc-reel-toggle{right:var(--site--margin,1.25rem);bottom:auto;top:calc(var(--_spacing---section-space--page-top,7rem) - 3.75rem)}";
+  document.head.appendChild(s);
+}
+
+function initReel(v, src, isHls) {
+  reelStyles();
+  v.muted = true; v.loop = true; v.playsInline = true;
+  v.setAttribute("aria-hidden", "true");
+  v.setAttribute("tabindex", "-1");
+  if (typeof v.disableRemotePlayback !== "undefined") v.disableRemotePlayback = true;
+  // The browser can't read a playlist on its own in most cases, so hold it back
+  if (isHls) { v.removeAttribute("src"); try { v.load(); } catch (e) {} }
+
+  // The button can't sit inside an aria-hidden layer, so the hero's goes on the section
+  const box = v.parentElement;
+  const hidden = v.closest('[aria-hidden="true"]:not(video)');
+  const host = hidden ? (v.closest("[data-case-hero]") || hidden.parentElement) : box;
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "bc-reel-toggle";
+  btn.dataset.state = "playing";
+  btn.setAttribute("aria-label", "Pause video");
+  btn.innerHTML =
+    '<svg class="bc-reel-pause" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 5v14M16 5v14" fill="none" stroke="currentColor" stroke-width="3"/></svg>' +
+    '<svg class="bc-reel-play" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 4.5v15a1 1 0 0 0 1.5.9l12-7.5a1 1 0 0 0 0-1.8l-12-7.5A1 1 0 0 0 7 4.5Z" fill="currentColor"/></svg>';
+  host.appendChild(btn);
+
+  let hls = null, attached = null, userPaused = false, inView = false;
+
+  const attach = () => {
+    if (attached) return attached;
+    if (!isHls) return (attached = Promise.resolve());
+    const native = !!v.canPlayType("application/vnd.apple.mpegurl");
+    // Safari with Managed Media Source plays HLS best on its own
+    if (native && "ManagedMediaSource" in window) { v.src = src; return (attached = Promise.resolve()); }
+    attached = loadHls().then(Hls => {
+      if (!document.contains(v)) return;
+      if (Hls.isSupported()) {
+        hls = new Hls({ maxBufferLength: 10, capLevelToPlayerSize: true });
+        hls.on(Hls.Events.ERROR, (e, d) => { if (d && d.fatal && hls) { hls.destroy(); hls = null; } });
+        hls.loadSource(src);
+        hls.attachMedia(v);
+      } else if (native) v.src = src;
+    }).catch(() => { if (v.canPlayType("application/vnd.apple.mpegurl")) v.src = src; });
+    return attached;
+  };
+
+  const play = () => {
+    if (userPaused || !inView) return;
+    attach().then(() => {
+      if (userPaused || !inView || !document.contains(v)) return;
+      const p = v.play();
+      if (p && p.catch) p.catch(() => {});
+    });
+  };
+
+  const sync = () => {
+    const paused = v.paused && userPaused;
+    btn.dataset.state = paused ? "paused" : "playing";
+    btn.setAttribute("aria-label", paused ? "Play video" : "Pause video");
+  };
+  v.addEventListener("playing", () => { v.classList.add("is-playing"); btn.classList.add("is-ready"); sync(); });
+  v.addEventListener("pause", sync);
+  btn.addEventListener("click", () => {
+    if (userPaused) { userPaused = false; play(); }
+    else { userPaused = true; v.pause(); }
+    sync();
+  });
+
+  const target = box || v;
+  let io = null, near = null;
+  if ("IntersectionObserver" in window) {
+    // Start loading a little before the reel scrolls into view
+    near = new IntersectionObserver(entries => entries.forEach(e => { if (e.isIntersecting) { attach(); near.disconnect(); } }),
+      { rootMargin: "0px 0px 50% 0px" });
+    near.observe(target);
+    io = new IntersectionObserver(entries => entries.forEach(e => {
+      inView = e.isIntersecting;
+      if (inView) play(); else v.pause();
+    }), { threshold: 0.1 });
+    io.observe(target);
+  } else { inView = true; play(); }
+
+  caseReels.push({
+    video: v,
+    destroy: () => {
+      if (io) io.disconnect();
+      if (near) near.disconnect();
+      if (hls) { try { hls.destroy(); } catch (e) {} hls = null; }
+      try { v.pause(); v.removeAttribute("src"); v.load(); } catch (e) {}
+      btn.remove();
+    }
+  });
+}
+
 function initContact(scope) {
   const root = scope.querySelector("[data-contact]");
   if (!root || root.dataset.scriptInitialized) return;
