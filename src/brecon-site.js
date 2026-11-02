@@ -76,6 +76,8 @@ function initOnceFunctions() {
 
 function initBeforeEnterFunctions(next) {
   nextPage = next || document;
+  if (has("[data-projects-source]")) initHomeProjects(nextPage);
+  if (has("[data-card-tags]")) initCardTags(nextPage);
   if (has("[data-case-hero]")) initCaseIntro(nextPage);
   if (has("[data-card-spot][data-accent], .projects_card_title")) initProjectCards(nextPage);
   if (has("[data-price]")) initPricing(nextPage);
@@ -897,6 +899,55 @@ function initCountUp(scope) {
         v: target, duration: 1.8, ease: "power4.out",
         onUpdate: () => { el.textContent = Math.round(counter.v); }
       })
+    });
+  });
+}
+
+// Homepage projects from the CMS. A Webflow page slot only takes components,
+// and a component can't hold a live Collection List, so the list sits in a
+// hidden block outside main ([data-projects-source]) and its rendered cards
+// are moved into the section's rail here. The dots and the total follow the
+// number of cards. Order in the CMS sets the order; the first is the big card.
+function initHomeProjects(scope) {
+  const source = scope.querySelector("[data-projects-source]");
+  const rail = scope.querySelector("[data-projects-rail]");
+  if (!source || !rail || rail.dataset.cmsFilled) return;
+  const cards = Array.from(source.querySelectorAll(".card_project_wrap"));
+  if (!cards.length) return;
+  rail.dataset.cmsFilled = "true";
+  rail.querySelectorAll(".card_project_wrap").forEach(c => c.remove());
+  cards.forEach(c => rail.appendChild(c));
+  source.remove();
+  const section = rail.closest("section") || scope;
+  const dots = section.querySelector(".projects_home_dots");
+  const proto = dots && dots.querySelector(".projects_home_dot");
+  if (proto) {
+    dots.textContent = "";
+    cards.forEach((_, i) => {
+      const d = proto.cloneNode(false);
+      d.classList.toggle("is-active", i === 0);
+      dots.appendChild(d);
+    });
+  }
+  const total = section.querySelector(".projects_home_count_total");
+  if (total) total.textContent = "/ " + String(cards.length).padStart(2, "0");
+}
+
+// Card tags from one CMS field. Services is written "Website | Brand | Print";
+// this turns the single bound tag into one pill per service.
+function initCardTags(scope) {
+  scope.querySelectorAll("[data-card-tags]").forEach(box => {
+    if (box.dataset.scriptInitialized) return;
+    box.dataset.scriptInitialized = "true";
+    const tag = box.querySelector(".card_project_tag");
+    if (!tag) return;
+    const parts = tag.textContent.split("|").map(t => t.trim()).filter(Boolean);
+    if (!parts.length) { tag.remove(); return; }
+    tag.textContent = parts[0];
+    parts.slice(1).forEach(text => {
+      const t = tag.cloneNode(false);
+      t.textContent = text;
+      box.appendChild(t);
     });
   });
 }
