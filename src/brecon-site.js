@@ -916,7 +916,18 @@ function initHomeProjects(scope) {
   if (!cards.length) return;
   rail.dataset.cmsFilled = "true";
   rail.querySelectorAll(".card_project_wrap").forEach(c => c.remove());
-  cards.forEach(c => rail.appendChild(c));
+  cards.forEach(c => {
+    // The reel link comes from the CMS on a hidden span: hand it to the media block
+    c.querySelectorAll("[data-card-reel]").forEach(el => {
+      const url = (el.getAttribute("data-card-reel") || "").trim();
+      const media = el.closest(".card_project_media");
+      if (url && media) media.setAttribute("data-card-video", url);
+      el.remove();
+    });
+    // A project with no card image (or inset) leaves an empty frame, not a broken image
+    c.querySelectorAll("img.w-dyn-bind-empty, img[src='']").forEach(img => img.remove());
+    rail.appendChild(c);
+  });
   source.remove();
   const section = rail.closest("section") || scope;
   const dots = section.querySelector(".projects_home_dots");
