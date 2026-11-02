@@ -917,11 +917,14 @@ function initHomeProjects(scope) {
   rail.dataset.cmsFilled = "true";
   rail.querySelectorAll(".card_project_wrap").forEach(c => c.remove());
   cards.forEach(c => {
-    // The reel link comes from the CMS on a hidden span: hand it to the media block
-    c.querySelectorAll("[data-card-reel]").forEach(el => {
+    // Webflow can't put a CMS field on the card's own attributes, so a hidden
+    // span carries the reel link and slug: hand them to the card, then drop it
+    c.querySelectorAll("[data-card-reel], [data-card-slug]").forEach(el => {
       const url = (el.getAttribute("data-card-reel") || "").trim();
+      const slug = (el.getAttribute("data-card-slug") || "").trim();
       const media = el.closest(".card_project_media");
       if (url && media) media.setAttribute("data-card-video", url);
+      if (slug) c.setAttribute("href", "/projects/" + encodeURIComponent(slug));
       el.remove();
     });
     // A project with no card image (or inset) leaves an empty frame, not a broken image
