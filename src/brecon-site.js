@@ -72,6 +72,7 @@ function initOnceFunctions() {
   onceFunctionsInitialized = true;
   initPrefetch();
   initNavMain();
+  initLinkButtons(document);
 }
 
 function initBeforeEnterFunctions(next) {
@@ -88,6 +89,21 @@ function initBeforeEnterFunctions(next) {
   if (has("[data-brief]")) initBriefFields(nextPage);
   if (has(".journal_card_meta, [class*='journal_article']")) initUkDates(nextPage);
   if (has(".clients_marquee")) initMarqueePause(nextPage);
+  if (has("a[href='#'][type=button]")) initLinkButtons(nextPage);
+}
+
+// Webflow Buttons used as controls (menu toggle, copy email) are links to "#".
+// Announce them as buttons, stop the jump to "#", and let Space press them like a real button.
+function initLinkButtons(scope) {
+  scope.querySelectorAll("a[href='#'][type=button]").forEach(a => {
+    if (a.dataset.bcButton) return;
+    a.dataset.bcButton = "true";
+    a.setAttribute("role", "button");
+    a.addEventListener("click", e => e.preventDefault());
+    a.addEventListener("keydown", e => {
+      if (e.key === " " || e.key === "Spacebar") { e.preventDefault(); a.click(); }
+    });
+  });
 }
 
 // Project brief: tie every label to its field so screen readers announce it,
