@@ -85,6 +85,66 @@ function initBeforeEnterFunctions(next) {
   if (has("[data-journal-more]")) initJournal(nextPage);
   if (has(".journal_card_tag, .journal_article_hero")) initJournalCategories(nextPage);
   if (has("[data-reveal]")) initReveal(nextPage);
+  if (has("[data-brief]")) initBriefFields(nextPage);
+  if (has(".journal_card_meta, [class*='journal_article']")) initUkDates(nextPage);
+  if (has(".clients_marquee")) initMarqueePause(nextPage);
+}
+
+// Project brief: tie every label to its field so screen readers announce it,
+// and drop the template's "Example text" placeholders.
+function initBriefFields(scope) {
+  scope.querySelectorAll("[data-brief] .contact_field").forEach(field => {
+    const label = field.querySelector("label");
+    const input = field.querySelector("input:not([type=radio]):not([type=checkbox]), textarea, select");
+    if (!input) return;
+    if (label && input.id && !label.htmlFor) label.htmlFor = input.id;
+    if (input.getAttribute("placeholder") === "Example text") input.removeAttribute("placeholder");
+  });
+}
+
+// Journal dates in UK style: "October 27th, 2026" becomes "27 October 2026".
+function initUkDates(scope) {
+  const re = /^(January|February|March|April|May|June|July|August|September|October|November|December) (\d{1,2})(?:st|nd|rd|th)?, (\d{4})$/;
+  (scope.querySelector("main") || scope).querySelectorAll("div, span, time, p").forEach(el => {
+    if (el.children.length) return;
+    const m = el.textContent.trim().match(re);
+    if (m) el.textContent = m[2] + " " + m[1] + " " + m[3];
+  });
+}
+
+// Pause button for the client logo strip (WCAG 2.2.2). One button controls
+// both rows. Only shown when the logos actually move.
+function initMarqueePause(scope) {
+  const wrap = scope.querySelector(".clients_wrap");
+  if (!wrap || wrap.querySelector(".clients_pause")) return;
+  if (!document.getElementById("bc-marquee-style")) {
+    const s = document.createElement("style");
+    s.id = "bc-marquee-style";
+    s.textContent =
+      ".clients_group:first-child{position:relative}" +
+      ".clients_pause{position:absolute;top:-.25rem;right:0;z-index:2;display:none;align-items:center;justify-content:center;width:2rem;height:2rem;padding:0;border-radius:50%;cursor:pointer;color:inherit;" +
+      "background:color-mix(in srgb,currentColor 7%,transparent);border:1px solid color-mix(in srgb,currentColor 18%,transparent);-webkit-backdrop-filter:blur(1rem);backdrop-filter:blur(1rem);transition:background-color .3s ease}" +
+      ".clients_pause:hover{background:color-mix(in srgb,currentColor 14%,transparent)}" +
+      ".clients_pause:focus-visible{outline:2px solid var(--swatch--brand-500,#ff6a3d);outline-offset:3px}" +
+      ".clients_pause svg{width:.75rem;height:.75rem;display:block}" +
+      ".clients_wrap.is-paused .clients_list{animation-play-state:paused!important}" +
+      "@media (prefers-reduced-motion:no-preference){.clients_pause{display:inline-flex}}";
+    document.head.appendChild(s);
+  }
+  const pauseIcon = '<svg viewBox="0 0 12 12" aria-hidden="true" fill="currentColor"><rect x="2" y="1.5" width="2.6" height="9" rx=".6"/><rect x="7.4" y="1.5" width="2.6" height="9" rx=".6"/></svg>';
+  const playIcon = '<svg viewBox="0 0 12 12" aria-hidden="true" fill="currentColor"><path d="M3 1.6v8.8c0 .5.5.8.9.5l6.6-4.4c.4-.2.4-.8 0-1L3.9 1.1C3.5.8 3 1.1 3 1.6Z"/></svg>';
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "clients_pause";
+  const set = paused => {
+    wrap.classList.toggle("is-paused", paused);
+    btn.setAttribute("aria-pressed", paused ? "true" : "false");
+    btn.setAttribute("aria-label", paused ? "Play the client logos" : "Pause the client logos");
+    btn.innerHTML = paused ? playIcon : pauseIcon;
+  };
+  set(false);
+  btn.addEventListener("click", () => set(!wrap.classList.contains("is-paused")));
+  (wrap.querySelector(".clients_group") || wrap).appendChild(btn);
 }
 
 function initAfterEnterFunctions(next) {
