@@ -73,6 +73,7 @@ function initOnceFunctions() {
   initPrefetch();
   initNavMain();
   initLinkButtons(document);
+  initCurrentYear(document);
 }
 
 function initBeforeEnterFunctions(next) {
@@ -90,6 +91,20 @@ function initBeforeEnterFunctions(next) {
   if (has(".journal_card_meta, [class*='journal_article']")) initUkDates(nextPage);
   if (has(".clients_marquee")) initMarqueePause(nextPage);
   if (has("a[href='#'][type=button]")) initLinkButtons(nextPage);
+  if (has("[data-current-year]")) initCurrentYear(nextPage);
+}
+
+// Current year (based on Osmo's Dynamic Current Year). Any element with data-current-year gets this
+// year. If it holds other words too, like "© 2026 Brecon Creative", only the year is swapped.
+function initCurrentYear(scope) {
+  const year = String(new Date().getFullYear());
+  scope.querySelectorAll("[data-current-year]").forEach(el => {
+    if (el.children.length === 0 && /^\s*(20\?\?|\d{4})?\s*$/.test(el.textContent)) { el.textContent = year; return; }
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      if (/20\?\?|\b20\d{2}\b/.test(n.nodeValue)) { n.nodeValue = n.nodeValue.replace(/20\?\?|\b20\d{2}\b/, year); break; }
+    }
+  });
 }
 
 // Webflow Buttons used as controls (menu toggle, copy email) are links to "#".
