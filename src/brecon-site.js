@@ -87,8 +87,6 @@ function initBeforeEnterFunctions(next) {
   if (has("[data-journal-more]")) initJournal(nextPage);
   if (has(".journal_card_tag, .journal_article_hero")) initJournalCategories(nextPage);
   if (has("[data-reveal]")) initReveal(nextPage);
-  if (has("[data-brief]")) initBriefFields(nextPage);
-  if (has(".journal_card_meta, [class*='journal_article']")) initUkDates(nextPage);
   if (has(".clients_marquee")) initMarqueePause(nextPage);
   if (has("a[href='#'][type=button]")) initLinkButtons(nextPage);
   if (has("[data-current-year]")) initCurrentYear(nextPage);
@@ -118,28 +116,6 @@ function initLinkButtons(scope) {
     a.addEventListener("keydown", e => {
       if (e.key === " " || e.key === "Spacebar") { e.preventDefault(); a.click(); }
     });
-  });
-}
-
-// Project brief: tie every label to its field so screen readers announce it,
-// and drop the template's "Example text" placeholders.
-function initBriefFields(scope) {
-  scope.querySelectorAll("[data-brief] .contact_field").forEach(field => {
-    const label = field.querySelector("label");
-    const input = field.querySelector("input:not([type=radio]):not([type=checkbox]), textarea, select");
-    if (!input) return;
-    if (label && input.id && !label.htmlFor) label.htmlFor = input.id;
-    if (input.getAttribute("placeholder") === "Example text") input.removeAttribute("placeholder");
-  });
-}
-
-// Journal dates in UK style: "October 27th, 2026" becomes "27 October 2026".
-function initUkDates(scope) {
-  const re = /^(January|February|March|April|May|June|July|August|September|October|November|December) (\d{1,2})(?:st|nd|rd|th)?, (\d{4})$/;
-  (scope.querySelector("main") || scope).querySelectorAll("div, span, time, p").forEach(el => {
-    if (el.children.length) return;
-    const m = el.textContent.trim().match(re);
-    if (m) el.textContent = m[2] + " " + m[1] + " " + m[3];
   });
 }
 
@@ -1018,8 +994,6 @@ function initHomeProjects(scope) {
       if (slug) c.setAttribute("href", "/projects/" + encodeURIComponent(slug));
       el.remove();
     });
-    // A project with no card image (or inset) leaves an empty frame, not a broken image
-    c.querySelectorAll("img.w-dyn-bind-empty, img[src='']").forEach(img => img.remove());
     rail.appendChild(c);
   });
   source.remove();
@@ -1150,13 +1124,12 @@ function initCase(scope) {
   hero.dataset.scriptInitialized = "true";
   window.__caseSeamless = false;
 
-  // Live site button only when there is a URL
+  // Live site button opens in a new tab. Conditional visibility in the
+  // Designer hides it when the Live site URL is empty
   scope.querySelectorAll("[data-site-link]").forEach(el => {
     const a = linkIn(el);
     const h = a ? (a.getAttribute("href") || "").trim() : "";
-    // A plain link hides its wrapper, a component hides itself
-    const box = el.matches("a") ? (el.parentElement || el) : el;
-    if (!h || h === "#") { box.style.display = "none"; return; }
+    if (!h || h === "#") return;
     a.setAttribute("target", "_blank");
     a.setAttribute("rel", "noopener");
   });
