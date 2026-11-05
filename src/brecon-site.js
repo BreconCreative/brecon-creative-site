@@ -62,6 +62,35 @@ const inWebflowEditor = () =>
 
 
 // -----------------------------------------
+// AFTER FIRST PAINT
+// On a full page load, motion that isn't needed for the first screen
+// (scroll reveals, the logo marquee, hover effects) waits until the browser
+// has drawn the page and has a spare moment, so it never competes with it.
+// The head code holds the marquee still until html gets bc-motion. Page
+// transitions run everything straight away, because the page is already up.
+// -----------------------------------------
+
+let firstLoad = true;
+const afterPaintQueue = [];
+function later(fn) {
+  if (!firstLoad) { fn(); return; }
+  afterPaintQueue.push(fn);
+}
+function flushAfterPaint() {
+  firstLoad = false;
+  const run = () => {
+    afterPaintQueue.splice(0).forEach(fn => { try { fn(); } catch (e) {} });
+    document.documentElement.classList.add("bc-motion");
+    if (hasScrollTrigger) ScrollTrigger.refresh();
+  };
+  requestAnimationFrame(() => {
+    if ("requestIdleCallback" in window) requestIdleCallback(run, { timeout: 1200 });
+    else setTimeout(run, 300);
+  });
+}
+
+
+// -----------------------------------------
 // FUNCTION REGISTRY
 // Each feature is gated by has() so it only runs where it is needed.
 // -----------------------------------------
@@ -86,8 +115,9 @@ function initBeforeEnterFunctions(next) {
   if (has("[data-faq-order]")) initFaqOrder(nextPage);
   if (has("[data-journal-more]")) initJournal(nextPage);
   if (has(".journal_card_tag, .journal_article_hero")) initJournalCategories(nextPage);
-  if (has("[data-reveal]")) initReveal(nextPage);
-  if (has(".clients_marquee")) initMarqueePause(nextPage);
+  const page = nextPage;
+  if (has("[data-reveal]")) later(() => initReveal(page));
+  if (has(".clients_marquee")) later(() => initMarqueePause(page));
   if (has("a[href='#'][type=button]")) initLinkButtons(nextPage);
   if (has("[data-current-year]")) initCurrentYear(nextPage);
 }
@@ -156,8 +186,9 @@ function initMarqueePause(scope) {
 
 function initAfterEnterFunctions(next) {
   nextPage = next || document;
-  if (has("[data-card-spot]")) initCardSpot(nextPage);
-  if (has(magneticSel)) initMagnetic(nextPage);
+  const page = nextPage;
+  if (has("[data-card-spot]")) later(() => initCardSpot(page));
+  if (has(magneticSel)) later(() => initMagnetic(page));
   if (has("[data-copy-email]")) initCopyEmail(nextPage);
   if (has("[data-count-up]")) initCountUp(nextPage);
   if (has("[data-projects-rail]")) initRail(nextPage);
@@ -169,7 +200,8 @@ function initAfterEnterFunctions(next) {
   if (restNavIndicator) restNavIndicator();
 
   if (hasLenis && lenis) lenis.resize();
-  if (hasScrollTrigger) ScrollTrigger.refresh();
+  // On a full page load the scroll positions are measured once, after first paint
+  if (hasScrollTrigger && !firstLoad) ScrollTrigger.refresh();
 }
 
 
@@ -639,6 +671,7 @@ if (!inWebflowEditor()) {
           initFirstVisitIntro();
           initBeforeEnterFunctions(data.next.container);
           initAfterEnterFunctions(data.next.container);
+          flushAfterPaint();
           return runPageOnceAnimation(data.next.container);
         },
         async leave(data) {
@@ -658,6 +691,7 @@ if (!inWebflowEditor()) {
   initNavMain();
   if (document.querySelector("[data-case-hero]")) initCaseIntro(document);
   initAfterEnterFunctions(document);
+  flushAfterPaint();
 }
 
 
