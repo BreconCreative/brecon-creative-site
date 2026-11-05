@@ -13,9 +13,38 @@
 (function () {
 "use strict";
 
+// -----------------------------------------
+// IMAGE PROTECTION
+// A light deterrent, not real protection: screenshots and dev tools still work.
+// On images that aren't inside a link: no right-click menu (so no "Save image"
+// or "Open image in new tab"), no dragging to the desktop, and no long-press
+// "Save to Photos" on iPhone. Images inside links (homepage and Projects cards)
+// are left alone so "Open link in new tab" keeps working. Listens on the
+// document, so it covers every page after a Barba swap with no re-init.
+// Off in the Webflow Editor. To exempt one image, give it data-allow-save.
+// -----------------------------------------
+
+function initImageProtect() {
+  if (window.bcImageProtect) return;
+  if (window.Webflow && Webflow.env && Webflow.env("editor")) return;
+  window.bcImageProtect = true;
+  const guarded = (t) =>
+    t instanceof Element && t.matches("img") && !t.closest("a[href], [data-allow-save]");
+  const block = (e) => { if (guarded(e.target)) e.preventDefault(); };
+  document.addEventListener("contextmenu", block);
+  document.addEventListener("dragstart", block);
+  const s = document.createElement("style");
+  s.id = "bc-image-protect";
+  s.textContent =
+    "img:not(a img):not([data-allow-save]){-webkit-user-drag:none;-webkit-touch-callout:none;" +
+    "-webkit-user-select:none;user-select:none}";
+  document.head.appendChild(s);
+}
+
 function run() {
-// Cookie consent works even if the animation libraries fail to load
+// Cookie consent and image protection work even if the animation libraries fail to load
 try { initConsent(); } catch (e) {}
+try { initImageProtect(); } catch (e) {}
 
 if (!window.gsap || !window.barba) return;
 
