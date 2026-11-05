@@ -83,10 +83,14 @@ function flushAfterPaint() {
     document.documentElement.classList.add("bc-motion");
     if (hasScrollTrigger) ScrollTrigger.refresh();
   };
-  requestAnimationFrame(() => {
+  const start = () => requestAnimationFrame(() => {
     if ("requestIdleCallback" in window) requestIdleCallback(run, { timeout: 1200 });
     else setTimeout(run, 300);
   });
+  // During the first visit intro the page is covered, so wait until it lifts
+  // rather than competing with the logo animation
+  if (window.bcIntroStarted && !window.bcIntroDone) document.addEventListener("bc:intro-done", start, { once: true });
+  else start();
 }
 
 
