@@ -1821,7 +1821,9 @@ function initContact(scope) {
     updateSummary();
   }
 
-  // Cal.com booking calendar, loaded when it gets close to the screen
+  // Cal.com booking calendar (about 1.8 MB, with third-party cookies). Loads
+  // on the visitor's first scroll, tap or key press, or when it comes within
+  // 200px of the screen, so a visit with no interaction never downloads it.
   const cal = scope.querySelector("[data-cal-link]");
   if (cal && !cal.dataset.scriptInitialized) {
     cal.dataset.scriptInitialized = "true";
@@ -1837,10 +1839,25 @@ function initContact(scope) {
       Cal.ns[ns]("ui", { theme: "dark", hideEventTypeDetails: false, layout: "month_view", cssVarsPerTheme: { dark: { "cal-brand": "#ff6a3d" } } });
       Cal.ns[ns]("on", { action: "linkReady", callback: () => frame.classList.add("is-loaded") });
     };
+    const events = ["scroll", "wheel", "pointerdown", "touchstart", "keydown"];
+    let io = null;
+    let started = false;
+    const cleanup = () => {
+      events.forEach(e => window.removeEventListener(e, start, { capture: true }));
+      if (io) io.disconnect();
+    };
+    function start() {
+      if (started) return;
+      started = true;
+      cleanup();
+      // The visitor may have moved to another page before interacting
+      if (document.contains(cal)) load();
+    }
+    events.forEach(e => window.addEventListener(e, start, { passive: true, capture: true }));
     if ("IntersectionObserver" in window) {
-      const io = new IntersectionObserver(entries => { if (entries.some(e => e.isIntersecting)) { io.disconnect(); load(); } }, { rootMargin: "800px 0px" });
+      io = new IntersectionObserver(entries => { if (entries.some(e => e.isIntersecting)) start(); }, { rootMargin: "200px 0px" });
       io.observe(cal);
-    } else load();
+    }
   }
 }
 
