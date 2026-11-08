@@ -60,6 +60,9 @@ html:not(#bc), body { background-color: var(--swatch--dark-900); }
 }
 /* Case study call to action stays hidden until its script takes over */
 html.bc-js [data-case-cta]:not(.is-ready) { visibility: hidden; }
+/* Contact brief shows only its first question from the first paint, so the hero doesn't shrink when the
+script sets up the steps. If the script never starts, bc-js goes after 4 seconds and every question shows. */
+html.bc-js [data-brief]:not(.is-ready) [data-brief-step] ~ [data-brief-step] { display: none; }
 /* Client logo marquee holds still until the page has drawn, then the site script adds bc-motion.
 If the script never starts, bc-js is removed after 4 seconds and the logos move anyway. */
 html.bc-js:not(.bc-motion) .clients_list { animation-play-state: paused; }
