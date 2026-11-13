@@ -67,9 +67,8 @@ html.bc-js [data-brief]:not(.is-ready) [data-brief-step] ~ [data-brief-step] { d
 If the script never starts, bc-js is removed after 4 seconds and the logos move anyway. */
 html.bc-js:not(.bc-motion) .clients_list { animation-play-state: paused; }
 :root { --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
-/* Button Roll component (Button group). Layout, sizes, variants, the sheen and the roll live in the
-Designer. Only the hover colour blends stay here: they mix Lumos trigger values, which the Designer can't store. */
-.button_roll_wrap { background-color: color-mix(in hsl, var(--_theme---button-primary--background) calc(100% * var(--_trigger---on)), var(--_theme---button-primary--background-hover) calc(100% * var(--_trigger---off))); color: color-mix(in hsl, var(--_theme---button-primary--text) calc(100% * var(--_trigger---on)), var(--_theme---button-primary--text-hover) calc(100% * var(--_trigger---off))); border-color: color-mix(in hsl, var(--_theme---button-primary--border) calc(100% * var(--_trigger---on)), var(--_theme---button-primary--border-hover) calc(100% * var(--_trigger---off))); }
+/* Button Roll component (Button group). Layout, sizes, variants, the sheen, the roll and the hover colour blends
+live in the Designer. Only the switches and the Glass tint below stay here. */
 /* Button Roll, Icon switch off (Webflow can't bind the arrow's visibility through its API, so the prop sets data-icon) */
 .button_roll_wrap[data-icon="false" i] .button_roll_icon { display: none; }
 /* Button Roll, Orange text switch (the prop sets data-orange) */
