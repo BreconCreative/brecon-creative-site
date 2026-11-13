@@ -182,6 +182,26 @@ function initLinkButtons(scope) {
   });
 }
 
+// Round icon buttons the script makes (pause buttons) use the Button Circle
+// component's classes, so they look and behave like the component.
+function circleButton(extraClass) {
+  if (!document.getElementById("bc-circle-style")) {
+    const s = document.createElement("style");
+    s.id = "bc-circle-style";
+    s.textContent = "button.button_circle_wrap{padding:0;margin:0;font:inherit;cursor:pointer}.button_circle_wrap svg{width:100%;height:100%;display:block}";
+    document.head.appendChild(s);
+  }
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "button_circle_wrap " + extraClass;
+  btn.setAttribute("data-trigger", "hover focus");
+  const icon = document.createElement("span");
+  icon.className = "button_circle_icon";
+  icon.setAttribute("aria-hidden", "true");
+  btn.appendChild(icon);
+  return btn;
+}
+
 // Pause button for the client logo strip (WCAG 2.2.2). One button controls
 // both rows. Only shown when the logos actually move.
 function initMarqueePause(scope) {
@@ -192,25 +212,21 @@ function initMarqueePause(scope) {
     s.id = "bc-marquee-style";
     s.textContent =
       ".clients_group:first-child{position:relative}" +
-      ".clients_pause{position:absolute;top:-.25rem;right:0;z-index:2;display:none;align-items:center;justify-content:center;width:2rem;height:2rem;padding:0;border-radius:50%;cursor:pointer;color:inherit;" +
-      "background:color-mix(in srgb,currentColor 7%,transparent);border:1px solid color-mix(in srgb,currentColor 18%,transparent);-webkit-backdrop-filter:blur(1rem);backdrop-filter:blur(1rem);transition:background-color .3s ease}" +
-      ".clients_pause:hover{background:color-mix(in srgb,currentColor 14%,transparent)}" +
-      ".clients_pause:focus-visible{outline:2px solid var(--swatch--brand-500,#ff6a3d);outline-offset:3px}" +
-      ".clients_pause svg{width:.75rem;height:.75rem;display:block}" +
+      ".clients_pause.button_circle_wrap{position:absolute;top:-.5rem;right:0;z-index:2;display:none}" +
       ".clients_wrap.is-paused .clients_list{animation-play-state:paused!important}" +
-      "@media (prefers-reduced-motion:no-preference){.clients_pause{display:inline-flex}}";
+      "@media (prefers-reduced-motion:no-preference){.clients_pause.button_circle_wrap{display:flex}}";
     document.head.appendChild(s);
   }
   const pauseIcon = '<svg viewBox="0 0 12 12" aria-hidden="true" fill="currentColor"><rect x="2" y="1.5" width="2.6" height="9" rx=".6"/><rect x="7.4" y="1.5" width="2.6" height="9" rx=".6"/></svg>';
   const playIcon = '<svg viewBox="0 0 12 12" aria-hidden="true" fill="currentColor"><path d="M3 1.6v8.8c0 .5.5.8.9.5l6.6-4.4c.4-.2.4-.8 0-1L3.9 1.1C3.5.8 3 1.1 3 1.6Z"/></svg>';
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.className = "clients_pause";
+  // Styled as a Button Circle, so it matches every other round button
+  const btn = circleButton("clients_pause");
+  const icon = btn.firstChild;
   const set = paused => {
     wrap.classList.toggle("is-paused", paused);
     btn.setAttribute("aria-pressed", paused ? "true" : "false");
     btn.setAttribute("aria-label", paused ? "Play the client logos" : "Pause the client logos");
-    btn.innerHTML = paused ? playIcon : pauseIcon;
+    icon.innerHTML = paused ? playIcon : pauseIcon;
   };
   set(false);
   btn.addEventListener("click", () => set(!wrap.classList.contains("is-paused")));
@@ -989,26 +1005,35 @@ function initMagnetic(scope) {
   });
 }
 
-// Copy email button
+// Copy email button. A Button Roll with Hook Attribute data-copy-email and the
+// address as Hook Value. Both rolling labels change to "Email copied" for a moment,
+// and a hidden live region tells screen reader users.
 function initCopyEmail(scope) {
   scope.querySelectorAll("[data-copy-email]").forEach(btn => {
     if (btn.dataset.scriptInitialized) return;
     btn.dataset.scriptInitialized = "true";
-    const email = btn.getAttribute("data-copy-email");
-    const text = btn.querySelector("[data-copy-email-text]");
-    const status = btn.querySelector("[data-copy-email-status]");
+    const email = (btn.getAttribute("data-copy-email") || "").trim();
+    if (!email) return;
+    const texts = btn.querySelectorAll(".button_roll_text, [data-copy-email-text]");
+    let status = btn.querySelector("[data-copy-email-status]");
+    if (!status) {
+      status = document.createElement("span");
+      status.className = "u-sr-only";
+      status.setAttribute("aria-live", "polite");
+      btn.appendChild(status);
+    }
     let timer = null;
-    btn.addEventListener("click", () => {
+    const setText = t => texts.forEach(el => { el.textContent = t; });
+    btn.addEventListener("click", e => {
+      e.preventDefault();
       if (!navigator.clipboard) { window.location.href = "mailto:" + email; return; }
       navigator.clipboard.writeText(email).then(() => {
-        btn.classList.add("is-active");
-        if (text) text.textContent = "Email copied";
-        if (status) status.textContent = "Email address copied to clipboard";
+        setText("Email copied");
+        status.textContent = "Email address copied to clipboard";
         clearTimeout(timer);
         timer = setTimeout(() => {
-          btn.classList.remove("is-active");
-          if (text) text.textContent = email;
-          if (status) status.textContent = "";
+          setText(email);
+          status.textContent = "";
         }, 1800);
       }).catch(() => { window.location.href = "mailto:" + email; });
     });
@@ -1058,7 +1083,9 @@ function initHomeProjects(scope) {
       const slug = (el.getAttribute("data-card-slug") || "").trim();
       const media = el.closest(".card_project_media");
       if (url && media) media.setAttribute("data-card-video", url);
-      if (slug) c.setAttribute("href", "/projects/" + encodeURIComponent(slug));
+      // The card's Clickable links to the project natively; this only fills a missing link
+      const link = c.matches("a") ? c : c.querySelector("a.clickable_link");
+      if (slug && link && /^#?$/.test(link.getAttribute("href") || "")) link.setAttribute("href", "/projects/" + encodeURIComponent(slug));
       el.remove();
     });
     rail.appendChild(c);
@@ -1368,14 +1395,11 @@ function reelStyles() {
   const s = document.createElement("style");
   s.id = "bc-reel-style";
   s.textContent =
-    ".bc-reel-toggle{position:absolute;right:1.25rem;bottom:1.25rem;z-index:3;width:2.75rem;height:2.75rem;padding:0;margin:0;display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid color-mix(in srgb,#F2F1EC 22%,transparent);background-color:color-mix(in srgb,#0A0E22 45%,transparent);-webkit-backdrop-filter:blur(1rem);backdrop-filter:blur(1rem);color:#F2F1EC;cursor:pointer;opacity:0;visibility:hidden;transition:opacity .4s ease,visibility .4s ease,background-color .3s ease}" +
+    ".bc-reel-toggle.button_circle_wrap{position:absolute;right:1.25rem;bottom:1.25rem;z-index:3;opacity:0;visibility:hidden;transition:opacity .4s ease,visibility .4s ease,background-color .4s ease,border-color .4s ease,color .4s ease}" +
     ".bc-reel-toggle.is-ready{opacity:1;visibility:visible}" +
-    ".bc-reel-toggle:hover{background-color:color-mix(in srgb,#0A0E22 70%,transparent)}" +
-    ".bc-reel-toggle:focus-visible{outline:2px solid #F2F1EC;outline-offset:3px}" +
-    ".bc-reel-toggle svg{width:1rem;height:1rem;display:block}" +
     ".bc-reel-toggle .bc-reel-play,.bc-reel-toggle[data-state=paused] .bc-reel-pause{display:none}" +
     ".bc-reel-toggle[data-state=paused] .bc-reel-play{display:block}" +
-    ".case_hero_wrap>.bc-reel-toggle{right:var(--site--margin,1.25rem);bottom:auto;top:calc(var(--_spacing---section-space--page-top,7rem) - 3.75rem)}";
+    ".case_hero_wrap>.bc-reel-toggle.button_circle_wrap{right:var(--site--margin,1.25rem);bottom:auto;top:calc(var(--_spacing---section-space--page-top,7rem) - 3.75rem)}";
   document.head.appendChild(s);
 }
 
@@ -1392,12 +1416,10 @@ function initReel(v, src, isHls) {
   const box = v.parentElement;
   const hidden = v.closest('[aria-hidden="true"]:not(video)');
   const host = hidden ? (v.closest("[data-case-hero]") || hidden.parentElement) : box;
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.className = "bc-reel-toggle";
+  const btn = circleButton("bc-reel-toggle");
   btn.dataset.state = "playing";
   btn.setAttribute("aria-label", "Pause video");
-  btn.innerHTML =
+  btn.firstChild.innerHTML =
     '<svg class="bc-reel-pause" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 5v14M16 5v14" fill="none" stroke="currentColor" stroke-width="3"/></svg>' +
     '<svg class="bc-reel-play" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 4.5v15a1 1 0 0 0 1.5.9l12-7.5a1 1 0 0 0 0-1.8l-12-7.5A1 1 0 0 0 7 4.5Z" fill="currentColor"/></svg>';
   host.appendChild(btn);
@@ -1785,9 +1807,9 @@ function initContact(scope) {
     // goes back to its own label if Webflow shows the error message
     const sendLabel = text => {
       form.querySelectorAll('[type="submit"]').forEach(b => {
-        const box = b.closest(".button-roll_wrap");
+        const box = b.closest(".button_roll_wrap");
         if (!box) return;
-        box.querySelectorAll(".button-roll_text").forEach(t => {
+        box.querySelectorAll(".button_roll_text").forEach(t => {
           if (!t.dataset.label) t.dataset.label = t.textContent;
           t.textContent = text || t.dataset.label;
         });
