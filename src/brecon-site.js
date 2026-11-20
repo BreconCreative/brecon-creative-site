@@ -688,7 +688,10 @@ if (!inWebflowEditor()) {
     if (hasLenis && lenis) { lenis.resize(); lenis.start(); }
     if (hasScrollTrigger) ScrollTrigger.refresh();
     trackPageView();
-    announcePage(data.next.container);
+    // Barba also runs afterEnter on the first full load. The browser has
+    // already put focus at the top there, so only move it after a real swap,
+    // or Tab skips the skip link, the menu and the cookie banner.
+    if (data.trigger !== "barba") announcePage(data.next.container);
   });
 
   barba.init({
@@ -1647,6 +1650,13 @@ function initContact(scope) {
     const output = form.querySelector("[data-brief-output]");
     const done = brief.querySelector(".w-form-done");
     const emptyText = summary ? summary.textContent.trim() : "";
+    // The summary scrambles in letter by letter. As a live region, screen
+    // readers read out the half-scrambled text, so it stays quiet and is read
+    // in place instead.
+    if (summary) summary.setAttribute("aria-live", "off");
+    // Errors are shown and announced by the brief itself, not the browser's
+    // own bubbles, which screen readers often miss
+    form.noValidate = true;
     let current = 0;
 
     const value = name => {
@@ -1731,7 +1741,9 @@ function initContact(scope) {
       if (count) count.textContent = pad(i + 1) + " / " + pad(total);
       setProgress(i / total);
       const step = steps[i];
-      if (motion && focus) gsap.fromTo(step, { autoAlpha: 0, y: "1rem" }, { autoAlpha: 1, y: 0, duration: 0.6, ease: "glide", clearProps: "transform,opacity,visibility" });
+      // Opacity, not autoAlpha: visibility:hidden would stop the question
+      // below taking focus, and focus would drop to the page
+      if (motion && focus) gsap.fromTo(step, { opacity: 0, y: "1rem" }, { opacity: 1, y: 0, duration: 0.6, ease: "glide", clearProps: "transform,opacity" });
       if (focus) {
         const q = step.querySelector("[data-brief-question]");
         if (q) { q.setAttribute("tabindex", "-1"); q.focus({ preventScroll: true }); }
@@ -1741,19 +1753,77 @@ function initContact(scope) {
       }
     };
 
+    // Errors: written on screen under the question or field, tied to it with
+    // aria-describedby so a screen reader reads it with the field, and
+    // cleared as soon as it's fixed
+    let errorCount = 0;
+    const errorFor = anchor => {
+      let el = anchor.nextElementSibling;
+      if (el && el.classList.contains("contact_error")) return el;
+      el = document.createElement("p");
+      el.className = "contact_error";
+      el.id = "brief-error-" + (++errorCount);
+      el.hidden = true;
+      el.style.cssText = "display:none;align-items:center;gap:.5em;margin:.75rem 0 0;font-size:.9375rem;line-height:1.4;color:#F2F1EC";
+      anchor.insertAdjacentElement("afterend", el);
+      return el;
+    };
+    const describe = (fields, id, on) => fields.forEach(f => {
+      const ids = (f.getAttribute("aria-describedby") || "").split(" ").filter(x => x && x !== id);
+      if (on) ids.push(id);
+      if (ids.length) f.setAttribute("aria-describedby", ids.join(" ")); else f.removeAttribute("aria-describedby");
+      if (on) f.setAttribute("aria-invalid", "true"); else f.removeAttribute("aria-invalid");
+    });
+    const setError = (anchor, fields, msg) => {
+      const el = errorFor(anchor);
+      el.innerHTML = '<span aria-hidden="true" style="flex:none;display:inline-grid;place-items:center;width:1.25em;height:1.25em;border-radius:50%;background:#FF6A3D;color:#0A0E22;font-weight:600;font-size:.8em">!</span>';
+      el.appendChild(document.createTextNode(msg));
+      el.hidden = false;
+      el.style.display = "flex";
+      describe(fields, el.id, true);
+    };
+    const clearError = (anchor, fields) => {
+      const el = anchor.nextElementSibling;
+      if (!el || !el.classList.contains("contact_error") || el.hidden) return;
+      el.hidden = true;
+      el.style.display = "none";
+      describe(fields, el.id, false);
+    };
+    const anchorFor = f => f.type === "radio" ? (f.closest(".contact_options") || f.closest("fieldset") || f) : f;
+    const messageFor = f => {
+      const label = ((f.labels && f.labels[0] && f.labels[0].textContent) || f.name || "this").replace(/\(optional\)/i, "").trim().toLowerCase();
+      if (f.validity.valueMissing) {
+        if (f.type === "email") return "Enter your email address";
+        if (f.tagName === "TEXTAREA") return "Tell me a little about your project";
+        return "Enter your " + label;
+      }
+      if (f.validity.typeMismatch && f.type === "email") return "Enter an email address like name@example.com";
+      if (f.validity.typeMismatch && f.type === "url") return "Enter a web address like example.com";
+      return f.validationMessage || "Check this answer";
+    };
     const valid = step => {
-      const radios = step.querySelectorAll('input[type="radio"]');
-      if (radios.length && !Array.from(radios).some(r => r.checked)) {
-        const opts = step.querySelector(".contact_options");
+      const radios = Array.from(step.querySelectorAll('input[type="radio"]'));
+      if (radios.length && !radios.some(r => r.checked)) {
+        const opts = anchorFor(radios[0]);
         if (opts && motion) gsap.fromTo(opts, { x: 0 }, { keyframes: [{ x: -6 }, { x: 6 }, { x: -3 }, { x: 0 }], duration: 0.4, ease: "none" });
+        setError(opts, radios, "Choose an option to continue");
         radios[0].focus();
-        say("Choose an option to continue");
         return false;
       }
-      const bad = Array.from(step.querySelectorAll("input, textarea, select")).find(f => f.type !== "radio" && !f.checkValidity());
-      if (bad) { bad.reportValidity(); bad.focus(); return false; }
+      const bad = Array.from(step.querySelectorAll("input, textarea, select")).filter(f => f.type !== "radio" && f.type !== "hidden" && !f.checkValidity());
+      bad.forEach(f => setError(anchorFor(f), [f], messageFor(f)));
+      if (bad.length) { bad[0].focus(); return false; }
       return true;
     };
+    // Clear an error the moment it's fixed
+    const recheck = e => {
+      const f = e.target;
+      if (!f || !f.name) return;
+      if (f.type === "radio") { const group = Array.from(form.querySelectorAll('input[name="' + f.name + '"]')); clearError(anchorFor(f), group); return; }
+      if (f.checkValidity()) clearError(anchorFor(f), [f]);
+    };
+    form.addEventListener("change", recheck);
+    form.addEventListener("input", recheck);
     const next = () => { if (valid(steps[current]) && current < total - 1) show(current + 1, true); };
     const back = () => { if (current > 0) show(current - 1, true); };
 
