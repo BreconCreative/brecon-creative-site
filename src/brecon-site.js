@@ -151,6 +151,7 @@ function initBeforeEnterFunctions(next) {
   const page = nextPage;
   if (has("[data-reveal]")) later(() => initReveal(page));
   if (has(".clients_marquee")) later(() => initMarqueePause(page));
+  if (has("[data-hero-home]")) initHeroOffscreen(nextPage);
   if (has("a[href='#'][type=button]")) initLinkButtons(nextPage);
   if (has("[data-current-year]")) initCurrentYear(nextPage);
 }
@@ -225,12 +226,25 @@ function initMarqueePause(scope) {
   const set = paused => {
     wrap.classList.toggle("is-paused", paused);
     btn.setAttribute("aria-pressed", paused ? "true" : "false");
-    btn.setAttribute("aria-label", paused ? "Play the client logos" : "Pause the client logos");
+    btn.setAttribute("aria-label", paused ? "Play the animation" : "Pause the animation");
     icon.innerHTML = paused ? playIcon : pauseIcon;
   };
   set(false);
   btn.addEventListener("click", () => set(!wrap.classList.contains("is-paused")));
   (wrap.querySelector(".clients_group") || wrap).appendChild(btn);
+}
+
+// Home hero: its light and lines only animate while the hero is on screen,
+// which saves battery and CPU once you scroll past. CSS reads is-offscreen.
+function initHeroOffscreen(scope) {
+  const hero = scope.querySelector("[data-hero-home]");
+  if (!hero || hero.bcOffscreen || !("IntersectionObserver" in window)) return;
+  hero.bcOffscreen = true;
+  const io = new IntersectionObserver(entries => {
+    if (!hero.isConnected) { io.disconnect(); return; }
+    entries.forEach(e => hero.classList.toggle("is-offscreen", !e.isIntersecting));
+  });
+  io.observe(hero);
 }
 
 function initAfterEnterFunctions(next) {
