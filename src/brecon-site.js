@@ -151,7 +151,7 @@ function initBeforeEnterFunctions(next) {
   const page = nextPage;
   if (has("[data-reveal]")) later(() => initReveal(page));
   if (has(".clients_marquee")) later(() => initMarqueePause(page));
-  if (has("[data-hero-home]")) initHeroOffscreen(nextPage);
+  if (has("[data-sky-aura]")) initHeroOffscreen(nextPage);
   if (has("a[href='#'][type=button]")) initLinkButtons(nextPage);
   if (has("[data-current-year]")) initCurrentYear(nextPage);
 }
@@ -237,17 +237,57 @@ function initMarqueePause(scope) {
 // Home hero: its light and lines only animate while the hero is on screen,
 // which saves battery and CPU once you scroll past. CSS reads is-offscreen.
 function initHeroOffscreen(scope) {
-  const hero = scope.querySelector("[data-hero-home]");
-  if (!hero || hero.bcOffscreen || !("IntersectionObserver" in window)) return;
-  hero.bcOffscreen = true;
-  const io = new IntersectionObserver(entries => {
-    if (!hero.isConnected) { io.disconnect(); return; }
-    entries.forEach(e => hero.classList.toggle("is-offscreen", !e.isIntersecting));
+  if (!("IntersectionObserver" in window)) return;
+  scope.querySelectorAll('[data-sky-aura="warm"]').forEach(aura => {
+    const hero = skyHero(aura);
+    if (!hero || hero.bcOffscreen) return;
+    hero.bcOffscreen = true;
+    const io = new IntersectionObserver(entries => {
+      if (!hero.isConnected) { io.disconnect(); return; }
+      entries.forEach(e => hero.classList.toggle("is-offscreen", !e.isIntersecting));
+    });
+    io.observe(hero);
   });
-  io.observe(hero);
 }
 
-// Home hero: the WebGL sunset. A small hand-written shader paints the same
+// The section a sky belongs to: the home hero, or the section a Page Sky sits in
+function skyHero(el) {
+  return el.closest("[data-hero-home]") || (el.closest(".sky_wrap") || el).parentElement;
+}
+// A sky set to Quiet (or any sky with --sky-static: 1) stays still: no WebGL, no cursor
+const skyStatic = el => getComputedStyle(el).getPropertyValue("--sky-static").trim() === "1";
+
+// Pause button for Page Sky heroes (the home hero uses the logo pause button).
+// Pauses the light, the lines and the cursor reaction (WCAG 2.2.2).
+function initSkyPause(scope) {
+  scope.querySelectorAll('.sky_wrap [data-sky-aura="warm"]').forEach(aura => {
+    const hero = skyHero(aura);
+    if (!hero || hero.querySelector(".sky_pause") || skyStatic(aura)) return;
+    if (!document.getElementById("bc-sky-pause-style")) {
+      const s = document.createElement("style");
+      s.id = "bc-sky-pause-style";
+      s.textContent =
+        ".sky_pause.button_circle_wrap{position:absolute;right:var(--_spacing---site--gutter,1.5rem);bottom:1.5rem;z-index:2;display:none}" +
+        "@media (prefers-reduced-motion:no-preference){.sky_pause.button_circle_wrap{display:flex}}";
+      document.head.appendChild(s);
+    }
+    const pauseIcon = '<svg viewBox="0 0 12 12" aria-hidden="true" fill="currentColor"><rect x="2" y="1.5" width="2.6" height="9" rx=".6"/><rect x="7.4" y="1.5" width="2.6" height="9" rx=".6"/></svg>';
+    const playIcon = '<svg viewBox="0 0 12 12" aria-hidden="true" fill="currentColor"><path d="M3 1.6v8.8c0 .5.5.8.9.5l6.6-4.4c.4-.2.4-.8 0-1L3.9 1.1C3.5.8 3 1.1 3 1.6Z"/></svg>';
+    const btn = circleButton("sky_pause");
+    const icon = btn.firstChild;
+    const set = paused => {
+      hero.classList.toggle("is-paused", paused);
+      btn.setAttribute("aria-pressed", paused ? "true" : "false");
+      btn.setAttribute("aria-label", paused ? "Play the animation" : "Pause the animation");
+      icon.innerHTML = paused ? playIcon : pauseIcon;
+    };
+    set(false);
+    btn.addEventListener("click", () => set(!hero.classList.contains("is-paused")));
+    hero.appendChild(btn);
+  });
+}
+
+// Hero skies: the WebGL sunset (home hero and every Page Sky). A small hand-written shader paints the same
 // sunset as the CSS layers in the hero_home_bg embed, but the colours flow
 // and fold through each other, and the sun sinks behind the lines as you
 // scroll. It reads the layer sizes (--warm, --rose and so on) and the brand
@@ -268,7 +308,8 @@ precision mediump float;
 uniform vec2 uR;
 uniform float uT, uS;
 uniform vec4 uW, uRo, uPl, uVt, uVl, uM;
-uniform vec3 cLi, cEm, cBr, cVi, cDb, cNv;
+uniform vec3 cLi, cEm, cBr, cVi, cDb, cNv, cUn;
+uniform float uI;
 vec3 pm(vec3 x){return mod((x*34.+1.)*x,289.);}
 float sn(vec2 v){
   const vec4 C=vec4(.211324865405187,.366025403784439,-.577350269189626,.024390243902439);
@@ -301,7 +342,7 @@ void main(){
   d=rd(p-w,vec4(uVt.xy*(1.+.06*sin(t*.48+1.)),uVt.zw))+.05*n2;
   c=ov(c,seg(d,0.,.72,st(cVi,.55),vec4(0.)));
   d=rd(p+w,uPl)+.05*n1;
-  c=ov(c,seg(d,0.,.75,st(cBr,.45),vec4(0.)));
+  c=ov(c,seg(d,0.,.75,st(cUn,.45),vec4(0.)));
   d=rd(p+vec2(w.y,w.x)*1.4,vec4(uRo.xy,uRo.zw+vec2(0.,.02*sin(t*.33))))+.08*n3;
   c=ov(c,d<.4?seg(d,0.,.4,st(cVi,.8),st(cVi*.5+cDb*.5,.6)):seg(d,.4,.76,st(cVi*.5+cDb*.5,.6),vec4(0.)));
   float k=(1.+.04*(1.+sin(t*.698)))*(1.-.3*s);
@@ -313,7 +354,7 @@ void main(){
   else if(d<.34)wm=seg(d,.2,.34,st(mix(cEm,sunC,.6),1.),st(sunC,1.));
   else if(d<.52)wm=seg(d,.34,.52,st(sunC,1.),st(sunC,.6));
   else wm=seg(d,.52,.74,st(sunC,.6),vec4(0.));
-  wm*=.95+.05*sin(t*.698);
+  wm*=(.95+.05*sin(t*.698))*uI;
   c=ov(c,wm);
   float r1=smoothstep(.2,.75,sn(vec2(q.x*.7-t*.09,q.y*1.8+.5*sin(q.x*1.2+t*.21)))),
         r2=smoothstep(.3,.85,sn(vec2(q.x*.9+3.7-t*.07,q.y*1.4-1.9)));
@@ -330,23 +371,24 @@ function heroGlStyles() {
   s.id = "bc-hero-gl-style";
   // The canvas takes the CSS layers' size and place, fades in over them, then they hide
   s.textContent =
-    ".hero_home_aura.is-gl{display:block;width:100%;-webkit-mask-image:none;mask-image:none;opacity:0;transition:opacity .8s cubic-bezier(.2,.7,.3,1)}" +
-    ".hero_home_aura.is-gl.is-on{opacity:1}" +
-    ".hero_home_bg.has-gl .hero_home_aura:not(.is-gl){filter:opacity(0);transition:filter .8s cubic-bezier(.7,0,.8,.3)}" +
-    ".hero_home_bg.has-gl-done .hero_home_aura:not(.is-gl){display:none}";
+    '[data-sky-aura="gl"]{display:block;width:100%;-webkit-mask-image:none;mask-image:none;opacity:0;transition:opacity .8s cubic-bezier(.2,.7,.3,1)}' +
+    '[data-sky-aura="gl"].is-on{opacity:1}' +
+    '.has-gl>[data-sky-aura="warm"],.has-gl>[data-sky-aura="cool"]{filter:opacity(0);transition:filter .8s cubic-bezier(.7,0,.8,.3)}' +
+    '.has-gl-done>[data-sky-aura="warm"],.has-gl-done>[data-sky-aura="cool"]{display:none}';
   document.head.appendChild(s);
 }
 
 function initHeroGl(scope) {
-  const bg = scope.querySelector(".hero_home_bg");
-  const warm = bg && bg.querySelector(".hero_home_aura.is-warm");
-  if (!warm || bg.bcGl || reducedMotion) return;
+  const warm = scope.querySelector('[data-sky-aura="warm"]');
+  const bg = warm && warm.parentElement;
+  if (!warm || bg.bcGl || reducedMotion || skyStatic(warm)) return;
   if (navigator.connection && navigator.connection.saveData) return;
   bg.bcGl = true;
   if (heroGl) heroGl.destroy();
 
   const canvas = document.createElement("canvas");
-  canvas.className = "hero_home_aura is-gl";
+  canvas.className = warm.className.replace("is-warm", "is-gl");
+  canvas.setAttribute("data-sky-aura", "gl");
   canvas.setAttribute("aria-hidden", "true");
   const gl = canvas.getContext("webgl", {
     alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false,
@@ -376,28 +418,35 @@ function initHeroGl(scope) {
   gl.vertexAttribPointer(aLoc, 2, gl.FLOAT, false, 0, 0);
   const u = {};
   ["uR", "uT", "uS", "uW", "uRo", "uPl", "uVt", "uVl", "uM",
-   "cLi", "cEm", "cBr", "cVi", "cDb", "cNv"].forEach(n => (u[n] = gl.getUniformLocation(prog, n)));
+   "cLi", "cEm", "cBr", "cVi", "cDb", "cNv", "cUn", "uI"].forEach(n => (u[n] = gl.getUniformLocation(prog, n)));
 
   heroGlStyles();
   warm.after(canvas);
 
-  // Brand glow colours only (brand rules): Linen core, Ember, Beacon, Violet, deep blue
+  // Brand glow colours only (brand rules). Each sky can recast the roles with
+  // --sky-core, --sky-glow, --sky-hot, --sky-cool, --sky-deep and --sky-under;
+  // without them it is the home sunset: Linen core, Ember, Beacon, Violet, deep blue.
   const colours = {
-    cLi: ["--swatch--light-200", "#f2f1ec"], cEm: ["--swatch--ember", "#ffa27e"],
-    cBr: ["--swatch--brand-500", "#ff6a3d"], cVi: ["--swatch--violet", "#7b5cd6"],
-    cDb: ["--swatch--deep-blue", "#28346e"], cNv: ["--swatch--dark-900", "#0a0e22"]
+    cLi: ["--sky-core", "--swatch--light-200", "#f2f1ec"], cEm: ["--sky-glow", "--swatch--ember", "#ffa27e"],
+    cBr: ["--sky-hot", "--swatch--brand-500", "#ff6a3d"], cVi: ["--sky-cool", "--swatch--violet", "#7b5cd6"],
+    cDb: ["--sky-deep", "--swatch--deep-blue", "#28346e"], cNv: ["--sky-night", "--swatch--dark-900", "#0a0e22"],
+    cUn: ["--sky-under", "--swatch--brand-500", "#ff6a3d"]
   };
   const probe = document.createElement("i");
   probe.style.display = "none";
   bg.appendChild(probe);
   Object.keys(colours).forEach(k => {
-    const [v, hex] = colours[k];
+    const [role, v, hex] = colours[k];
     probe.style.color = hex;
-    probe.style.color = "var(" + v + ", " + hex + ")";
-    const m = (getComputedStyle(probe).color.match(/[\d.]+/g) || []).map(Number);
-    gl.uniform3f(u[k], (m[0] || 0) / 255, (m[1] || 0) / 255, (m[2] || 0) / 255);
+    probe.style.color = "var(" + role + ", var(" + v + ", " + hex + "))";
+    const c = getComputedStyle(probe).color;
+    // rgb() is 0 to 255; color(srgb ...) from color-mix() is 0 to 1
+    const scale = c.indexOf("color(") === 0 ? 1 : 255;
+    const m = (c.replace(/^color\(srgb/, "").match(/[\d.]+/g) || []).map(Number);
+    gl.uniform3f(u[k], (m[0] || 0) / scale, (m[1] || 0) / scale, (m[2] || 0) / scale);
   });
   probe.remove();
+  gl.uniform1f(u.uI, parseFloat(getComputedStyle(warm).getPropertyValue("--sky-intensity")) || 1);
 
   // Layer sizes and positions, read from the embed's variables (they change per screen size)
   const layers = { uW: "--warm", uRo: "--rose", uPl: "--plum", uVt: "--vio-top", uVl: "--vio-left", uM: "--mask" };
@@ -409,8 +458,7 @@ function initHeroGl(scope) {
     });
   };
 
-  const hero = bg.closest("[data-hero-home]");
-  const wrap = bg.closest(".clients_wrap");
+  const hero = skyHero(warm);
   let t = 0, last = 0, raf = 0, alive = true, shown = false, doneTimer = 0;
 
   const draw = () => {
@@ -444,7 +492,8 @@ function initHeroGl(scope) {
   };
 
   const visible = () => !document.hidden && !(hero && hero.classList.contains("is-offscreen"));
-  const paused = () => !!(wrap && wrap.classList.contains("is-paused"));
+  // Paused by the logo pause button (home) or the sky pause button (other pages)
+  const paused = () => !!warm.closest(".is-paused");
   const frame = now => {
     raf = 0;
     if (!alive) return;
@@ -489,7 +538,8 @@ function initHeroGl(scope) {
 
   ro.observe(canvas);
   if (hero) mo.observe(hero, { attributes: true, attributeFilter: ["class"] });
-  if (wrap) mo.observe(wrap, { attributes: true, attributeFilter: ["class"] });
+  const clients = warm.closest(".clients_wrap");
+  if (clients) mo.observe(clients, { attributes: true, attributeFilter: ["class"] });
   document.addEventListener("visibilitychange", kick);
   window.addEventListener("scroll", onScroll, { passive: true });
   rmMQ.addEventListener?.("change", onMotion);
@@ -513,25 +563,26 @@ function cleanupHeroGl() {
 let heroRidge = null;
 
 function initHeroRidge(scope) {
-  const svg = scope.querySelector(".hero_home_lines");
-  if (!svg || svg.bcRidge || reducedMotion || !fineMQ.matches) return;
-  const paths = [0, 1, 2, 3, 4, 5].map(i => svg.querySelector("#hero-home-r" + i)).filter(Boolean);
+  const svg = scope.querySelector("[data-sky-lines]");
+  if (!svg || svg.bcRidge || reducedMotion || !fineMQ.matches || skyStatic(svg)) return;
+  const paths = [...svg.querySelectorAll("[data-sky-line]")]
+    .sort((a, b) => a.getAttribute("data-sky-line") - b.getAttribute("data-sky-line"));
   if (paths.length < 2 || typeof paths[0].getPointAtLength !== "function") return;
   svg.bcRidge = true;
   if (heroRidge) heroRidge.destroy();
 
   // The blurred glow line stays still: redrawing a blur every frame is the one
   // expensive part. It points at a fixed copy of the top line instead.
-  const glow = svg.querySelector(".hero_home_line.is-glow");
+  const glow = svg.querySelector("[data-sky-glow]");
   if (glow) {
     const still = paths[0].cloneNode();
-    still.id = "hero-home-r0-still";
+    still.id = paths[0].id + "-still";
+    still.removeAttribute("data-sky-line");
     paths[0].after(still);
-    glow.setAttribute("href", "#hero-home-r0-still");
+    glow.setAttribute("href", "#" + still.id);
   }
-  const ridge = svg.querySelector(".hero_home_ridge");
-  const hero = svg.closest("[data-hero-home]");
-  const wrap = svg.closest(".clients_wrap");
+  const ridge = svg.querySelector("[data-sky-ridge]");
+  const hero = skyHero(svg);
   const SAMPLES = 64, RADIUS = 180, PUSH = 0.17, FOLLOW = 0.6, MAX = 9;
 
   // Sample each line once. Points keep their own spring offset in pixels.
@@ -561,7 +612,7 @@ function initHeroRidge(scope) {
   let raf = 0, last = 0, moved = false, alive = true;
 
   const blocked = () => reducedMotion || !fineMQ.matches || document.hidden ||
-    (wrap && wrap.classList.contains("is-paused")) || (hero && hero.classList.contains("is-offscreen"));
+    !!svg.closest(".is-paused") || (hero && hero.classList.contains("is-offscreen"));
 
   const frame = now => {
     raf = 0;
@@ -666,8 +717,9 @@ function initAfterEnterFunctions(next) {
   if (has("[data-case-hero]")) initCase(nextPage);
   if (has("[data-card-video]")) initCardReels(nextPage);
   if (has("[data-contact]")) initContact(nextPage);
-  if (has(".hero_home_bg")) later(() => initHeroGl(page));
-  if (has(".hero_home_lines")) later(() => initHeroRidge(page));
+  if (has("[data-sky-aura]")) later(() => initHeroGl(page));
+  if (has("[data-sky-lines]")) later(() => initHeroRidge(page));
+  if (has(".sky_wrap")) initSkyPause(nextPage);
   if (has("details[data-accordion]")) initAccordion(nextPage);
   if (has("[data-not-found]")) initNotFound(nextPage);
   if (restNavIndicator) restNavIndicator();
