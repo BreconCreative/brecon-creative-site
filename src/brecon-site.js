@@ -151,6 +151,7 @@ function initBeforeEnterFunctions(next) {
   const page = nextPage;
   if (has("[data-reveal]")) later(() => initReveal(page));
   if (has(".clients_marquee")) later(() => initMarqueePause(page));
+  if (has(".hero_home_bg")) markHomeSky(nextPage);
   if (has("[data-sky-aura]")) initHeroOffscreen(nextPage);
   if (has("a[href='#'][type=button]")) initLinkButtons(nextPage);
   if (has("[data-current-year]")) initCurrentYear(nextPage);
@@ -248,6 +249,19 @@ function initHeroOffscreen(scope) {
     });
     io.observe(hero);
   });
+}
+
+// The home hero embed predates the shared sky attributes, so mark its parts here
+function markHomeSky(scope) {
+  const bg = scope.querySelector(".hero_home_bg");
+  if (!bg) return;
+  const set = (sel, name, value) => bg.querySelectorAll(sel).forEach(el => el.setAttribute(name, value));
+  set(".hero_home_aura.is-warm", "data-sky-aura", "warm");
+  set(".hero_home_aura.is-cool", "data-sky-aura", "cool");
+  set(".hero_home_lines", "data-sky-lines", "");
+  set(".hero_home_ridge", "data-sky-ridge", "");
+  set(".hero_home_line.is-glow", "data-sky-glow", "");
+  for (let i = 0; i < 6; i++) set("#hero-home-r" + i, "data-sky-line", String(i));
 }
 
 // The section a sky belongs to: the home hero, or the section a Page Sky sits in
