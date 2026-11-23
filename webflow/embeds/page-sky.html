@@ -5,15 +5,15 @@
    The site script adds the WebGL glow, the cursor on the ridge and the pause button. It reads the variables below. */
 .sky_wrap {
   --aura-h: 100svh; --band-h: clamp(14rem, 30svh, 18rem);
-  --warm: 46% 18% at 64% 99%; --rose: 34% 44% at 100% 72%; --plum: 70% 16% at 50% 100%;
-  --vio-top: 30% 30% at 90% 55%; --vio-left: 50% 28% at 14% 99%; --mask: 100% 62% at 70% 100%;
+  --warm: 42% 28% at 65% 83%; --rose: 36% 60% at 100% 62%; --plum: 70% 22% at 52% 97%;
+  --vio-top: 30% 36% at 88% 34%; --vio-left: 50% 40% at 16% 94%; --mask: 100% 90% at 72% 86%;
   --sky-core: var(--swatch--light-200); --sky-glow: var(--swatch--ember); --sky-hot: var(--swatch--brand-500);
   --sky-cool: var(--swatch--violet); --sky-deep: var(--swatch--deep-blue); --sky-under: var(--swatch--brand-500);
   --sky-intensity: 0.95; }
 /* Room under the hero content, so the ridge and the glow sit below the words */
 :has(> .sky_wrap) > .u-container { padding-bottom: 7rem; }
-:has(> sky_wrap.w-variant-880512dd-67f3-65b5-330d-e8f58bb4896d) > .u-container { padding-bottom: 0; }
-:has(> sky_wrap.w-variant-a027ad85-0439-806f-985a-f117331553f7) > .u-container { padding-bottom: 3rem; }
+:has(> .sky_wrap.w-variant-880512dd-67f3-65b5-330d-e8f58bb4896d) > .u-container { padding-bottom: 0; }
+:has(> .sky_wrap.w-variant-a027ad85-0439-806f-985a-f117331553f7) > .u-container { padding-bottom: 3rem; }
 .sky_aura { position: absolute; left: 0; right: 0; bottom: 0; height: var(--aura-h); -webkit-mask-image: radial-gradient(var(--mask), #000 42%, transparent 82%); mask-image: radial-gradient(var(--mask), #000 42%, transparent 82%); }
 .sky_aura.is-warm { background-image: radial-gradient(var(--warm), var(--sky-core) 0%, var(--sky-glow) 9%, color-mix(in srgb, var(--sky-glow) 40%, var(--sky-hot)) 20%, var(--sky-hot) 34%, color-mix(in srgb, var(--sky-hot) 60%, transparent) 52%, transparent 74%), radial-gradient(var(--rose), color-mix(in srgb, var(--sky-cool) 80%, transparent) 0%, color-mix(in srgb, color-mix(in srgb, var(--sky-cool) 50%, var(--sky-deep)) 60%, transparent) 40%, transparent 76%), radial-gradient(var(--plum), color-mix(in srgb, var(--sky-under) 45%, transparent) 0%, transparent 75%); }
 .sky_aura.is-cool { background-image: radial-gradient(var(--vio-top), color-mix(in srgb, var(--sky-cool) 55%, transparent) 0%, transparent 72%), radial-gradient(var(--vio-left), color-mix(in srgb, var(--sky-deep) 90%, transparent) 0%, color-mix(in srgb, color-mix(in srgb, var(--sky-cool) 30%, var(--sky-deep)) 60%, transparent) 50%, transparent 78%); }
@@ -35,13 +35,13 @@
 .sky_grain { position: absolute; inset: 0; background-image: var(--grain); opacity: 0.6; mix-blend-mode: overlay; }
 
 /* First light (About): a smaller, softer Ember sun with more deep blue around it */
-.sky_wrap.w-variant-96698328-a722-7454-e002-ead938794970 { --warm: 20% 20% at 74% 92%; --vio-left: 70% 34% at 25% 100%; --sky-hot: var(--swatch--ember); --sky-glow: color-mix(in srgb, var(--swatch--ember) 50%, var(--swatch--light-200)); --sky-under: var(--swatch--ember); --sky-intensity: 0.85; }
+.sky_wrap.w-variant-96698328-a722-7454-e002-ead938794970 { --warm: 24% 24% at 74% 82%; --vio-left: 70% 44% at 25% 96%; --sky-hot: var(--swatch--ember); --sky-glow: color-mix(in srgb, var(--swatch--ember) 50%, var(--swatch--light-200)); --sky-under: var(--swatch--ember); --sky-intensity: 0.85; }
 /* Beacon (Projects): the boldest sun */
-.sky_wrap.w-variant-86c86cb4-a37c-44d6-64c9-2699bcf9a8f5 { --warm: 36% 30% at 70% 96%; --plum: 80% 22% at 55% 100%; --vio-top: 26% 30% at 94% 50%; --sky-intensity: 1; }
+.sky_wrap.w-variant-86c86cb4-a37c-44d6-64c9-2699bcf9a8f5 { --warm: 34% 38% at 72% 82%; --plum: 80% 26% at 55% 98%; --vio-top: 26% 34% at 94% 36%; --sky-intensity: 1; }
 /* Signal (Contact): a warm glow rising behind the brief */
-.sky_wrap.w-variant-880512dd-67f3-65b5-330d-e8f58bb4896d { --warm: 30% 34% at 78% 90%; --rose: 30% 50% at 100% 50%; --vio-left: 60% 30% at 15% 100%; --mask: 110% 80% at 72% 96%; --sky-intensity: 1; }
+.sky_wrap.w-variant-880512dd-67f3-65b5-330d-e8f58bb4896d { --warm: 30% 36% at 78% 80%; --rose: 30% 50% at 100% 44%; --vio-left: 60% 36% at 15% 96%; --mask: 110% 90% at 74% 84%; --sky-intensity: 1; }
 /* Moonrise (Journal): a Linen moon in a Violet and deep blue sky, with a faint Ember glow under the ridge */
-.sky_wrap.w-variant-264a59e9-5ddd-b1d4-9e0e-a470aa516a35 { --warm: 22% 22% at 72% 94%; --rose: 40% 50% at 100% 70%; --vio-top: 40% 40% at 70% 60%; --vio-left: 70% 30% at 20% 100%; --plum: 70% 14% at 40% 100%;
+.sky_wrap.w-variant-264a59e9-5ddd-b1d4-9e0e-a470aa516a35 { --warm: 24% 28% at 74% 80%; --rose: 40% 56% at 100% 60%; --vio-top: 40% 44% at 72% 50%; --vio-left: 70% 40% at 20% 96%; --plum: 70% 18% at 40% 98%;
   --sky-glow: color-mix(in srgb, var(--swatch--violet) 45%, var(--swatch--light-200)); --sky-hot: var(--swatch--violet); --sky-cool: var(--swatch--deep-blue); --sky-under: var(--swatch--ember);
   --sky-line-3: var(--swatch--light-200); --sky-intensity: 0.95; }
 /* Quiet (legal pages and 404): a dim afterglow that stays still */
@@ -54,15 +54,15 @@
 .sky_lines { left: -30%; width: 130%; }
 }
 @media (max-width: 767px) {
-.sky_wrap { --band-h: 12rem; --aura-h: 92svh; --warm: 80% 14% at 64% 99%; --rose: 50% 30% at 106% 82%; --vio-top: 44% 30% at 100% 70%; --vio-left: 80% 18% at 4% 99%; --plum: 90% 12% at 50% 100%; --mask: 160% 46% at 70% 100%; }
+.sky_wrap { --band-h: 12rem; --aura-h: 92svh; --warm: 60% 20% at 64% 84%; --rose: 46% 32% at 106% 74%; --vio-top: 44% 40% at 108% 38%; --vio-left: 80% 22% at 4% 94%; --plum: 90% 16% at 50% 97%; --mask: 140% 80% at 70% 90%; }
 :has(> .sky_wrap) > .u-container { padding-bottom: 8rem; }
-:has(> sky_wrap.w-variant-880512dd-67f3-65b5-330d-e8f58bb4896d) > .u-container { padding-bottom: 6rem; }
-:has(> sky_wrap.w-variant-a027ad85-0439-806f-985a-f117331553f7) > .u-container { padding-bottom: 4rem; }
+:has(> .sky_wrap.w-variant-880512dd-67f3-65b5-330d-e8f58bb4896d) > .u-container { padding-bottom: 6rem; }
+:has(> .sky_wrap.w-variant-a027ad85-0439-806f-985a-f117331553f7) > .u-container { padding-bottom: 4rem; }
 .sky_lines { left: -62%; width: 164%; }
-.sky_wrap.w-variant-96698328-a722-7454-e002-ead938794970 { --warm: 50% 12% at 70% 97%; }
-.sky_wrap.w-variant-86c86cb4-a37c-44d6-64c9-2699bcf9a8f5 { --warm: 90% 18% at 64% 99%; }
-.sky_wrap.w-variant-880512dd-67f3-65b5-330d-e8f58bb4896d { --warm: 80% 18% at 70% 99%; --mask: 160% 50% at 70% 100%; }
-.sky_wrap.w-variant-264a59e9-5ddd-b1d4-9e0e-a470aa516a35 { --warm: 56% 13% at 70% 97%; }
+.sky_wrap.w-variant-96698328-a722-7454-e002-ead938794970 { --warm: 40% 15% at 70% 84%; }
+.sky_wrap.w-variant-86c86cb4-a37c-44d6-64c9-2699bcf9a8f5 { --warm: 64% 22% at 64% 86%; }
+.sky_wrap.w-variant-880512dd-67f3-65b5-330d-e8f58bb4896d { --warm: 60% 20% at 70% 86%; }
+.sky_wrap.w-variant-264a59e9-5ddd-b1d4-9e0e-a470aa516a35 { --warm: 44% 16% at 70% 84%; }
 }
 /* Motion keeps the home hero's timings. Transform and opacity only. It pauses off screen and with the pause button */
 @media (prefers-reduced-motion: no-preference) {
