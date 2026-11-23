@@ -1,0 +1,143 @@
+<style>
+/* Home hero, Horizon. The words sit on navy. Below and to the right, a bright sunset of Beacon, rose, plum and
+   violet rises behind the crest of the glowing lines, which run along the top of the client logos. This embed sits
+   inside clients_wrap, so the colour always starts below the buttons on phones, whatever the screen height. */
+.hero_home_wrap { container-type: inline-size; }
+/* Grain over the hero, fading out at the bottom so there is no line where the hero meets Projects */
+.hero_home_wrap::before { content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; background-image: var(--grain); background-repeat: repeat; -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - min(18rem, 34%)), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - min(18rem, 34%)), transparent); }
+.hero_home_contain { position: relative; }
+.clients_wrap { position: relative; }
+/* The band the horizon is drawn in: full width, resting on the client logos, rising into the space below the buttons. */
+.hero_home_bg { position: absolute; z-index: -1; pointer-events: none; left: calc(50% - 50vw); width: 100vw; bottom: calc(100% - 1.5rem); height: clamp(15rem, 32svh, 20rem); }
+/* The sunset: two colour layers that drift at different speeds, so the light feels alive. The mask keeps the
+   colour away from the words. Sizes and positions change per screen size through the variables below. */
+.hero_home_aura { --aura-h: 100svh; --warm: 30% 34% at 77% 80%; --rose: 36% 70% at 100% 55%; --plum: 60% 32% at 52% 96%; --vio-top: 30% 38% at 88% 18%; --vio-left: 50% 44% at 20% 92%; --mask: 105% 105% at 76% 80%;
+  position: absolute; left: 0; right: 0; bottom: 0; height: var(--aura-h); -webkit-mask-image: radial-gradient(var(--mask), #000 42%, transparent 82%); mask-image: radial-gradient(var(--mask), #000 42%, transparent 82%); }
+.hero_home_aura.is-warm { background-image: radial-gradient(var(--warm), var(--_light-field---cream) 0%, var(--_light-field---peach) 9%, var(--_light-field---coral) 20%, var(--swatch--brand-500) 34%, color-mix(in srgb, var(--swatch--brand-500) 60%, transparent) 52%, transparent 74%), radial-gradient(var(--rose), var(--_light-field---rose) 0%, color-mix(in srgb, var(--_light-field---plum) 85%, transparent) 40%, transparent 76%), radial-gradient(var(--plum), color-mix(in srgb, var(--_light-field---plum) 70%, transparent) 0%, transparent 75%); }
+.hero_home_aura.is-cool { background-image: radial-gradient(var(--vio-top), color-mix(in srgb, var(--_light-field---indigo) 70%, transparent) 0%, transparent 72%), radial-gradient(var(--vio-left), color-mix(in srgb, var(--_light-field---indigo) 80%, transparent) 0%, color-mix(in srgb, color-mix(in srgb, var(--_light-field---periwinkle) 25%, var(--swatch--dark-900)) 70%, transparent) 50%, transparent 78%); }
+/* Navy floor under the colour, so it settles into the logos with no edge */
+.hero_home_floor { position: absolute; left: 0; right: 0; bottom: -4rem; height: 12rem; background-image: linear-gradient(to top, var(--swatch--dark-900) 6.5rem, transparent); }
+.hero_home_lines { position: absolute; top: 0; left: 0; width: 100%; max-width: none; height: 100%; -webkit-mask-image: linear-gradient(to bottom, #000 78%, transparent 100%); mask-image: linear-gradient(to bottom, #000 78%, transparent 100%); }
+.hero_home_stop.is-1 { stop-color: var(--_light-field---periwinkle); }
+.hero_home_stop.is-2 { stop-color: var(--_light-field---rose); }
+.hero_home_stop.is-3 { stop-color: var(--_light-field---apricot); }
+/* The ridge under the top line is navy, so the sun looks as if it is rising behind the hill */
+.hero_home_stop.is-ridge-top { stop-color: var(--swatch--dark-900); stop-opacity: 0.2; }
+.hero_home_stop.is-ridge-mid { stop-color: var(--swatch--dark-900); stop-opacity: 0.75; }
+.hero_home_stop.is-ridge-bottom { stop-color: var(--swatch--dark-900); stop-opacity: 1; }
+.hero_home_ridge { fill: url(#hero-home-ridge); }
+.hero_home_line { --o: 1; fill: none; stroke: url(#hero-home-line); stroke-width: 1.3; opacity: var(--o); }
+.hero_home_spark { fill: none; stroke: var(--_light-field---cream); stroke-width: 2.4; stroke-linecap: round; stroke-dasharray: 70 1930; stroke-dashoffset: 70; opacity: 0; filter: url(#hero-home-spark-glow); }
+.hero_home_line.is-glow { --o: 0.7; stroke-width: 7; filter: url(#hero-home-blur); }
+.hero_home_line.is-1 { --o: 0.95; }
+.hero_home_line.is-2 { --o: 0.62; }
+.hero_home_line.is-3 { --o: 0.48; }
+.hero_home_line.is-4 { --o: 0.37; }
+.hero_home_line.is-5 { --o: 0.27; }
+.hero_home_line.is-6 { --o: 0.19; }
+/* The headline size (on hero_home_title) follows this width: 100cqi / 10.4, so "Agency grade websites." just fits on line one */
+.hero_home_content { container-type: inline-size; }
+/* Eyebrow: the award, as plain mono text. No dot, no pill, no glow. A hairline divides the two parts on wider screens */
+.hero_home_eyebrow_meta { display: flex; align-items: center; column-gap: 0.875rem; }
+.hero_home_eyebrow_meta::before { content: ""; width: 1px; height: 0.75rem; flex-shrink: 0; background-color: color-mix(in srgb, var(--_theme---text) 25%, transparent); }
+/* Ryan card, under the client logos */
+.hero_home_founder { align-self: flex-start; background-color: color-mix(in srgb, var(--_theme---text) 7%, transparent); border-color: color-mix(in srgb, var(--_theme---text) 16%, transparent); -webkit-backdrop-filter: blur(1.5rem) saturate(140%); backdrop-filter: blur(1.5rem) saturate(140%); box-shadow: inset 0 0.0625rem 0 color-mix(in srgb, var(--_theme---text) 18%, transparent), 0 0.625rem 2.5rem color-mix(in srgb, var(--swatch--dark-900) 35%, transparent); }
+.clients_wrap { border-top-color: color-mix(in srgb, var(--_theme---text) 14%, transparent); }
+/* Client logos: one scrolling row at every size. The hidden clone list makes the loop seamless. */
+.clients_marquee { -webkit-mask-image: linear-gradient(90deg, transparent, black 10%, black 90%, transparent); mask-image: linear-gradient(90deg, transparent, black 10%, black 90%, transparent); }
+.clients_list { flex-wrap: nowrap; padding-right: 2.25rem; }
+.clients_list.is-clone, .clients_list.is-earlier.is-clone { display: flex; }
+/* Reduced motion: no scrolling, so the logos wrap onto extra lines instead and the clones stay hidden */
+@media (prefers-reduced-motion: reduce) {
+.clients_marquee { -webkit-mask-image: none; mask-image: none; }
+.clients_list { flex-wrap: wrap; flex-shrink: 1; padding-right: 0; }
+.clients_list.is-clone, .clients_list.is-earlier.is-clone { display: none; }
+}
+/* Eyebrow on two lines below the small breakpoint, with no divider */
+@media (max-width: 767px) { .hero_home_eyebrow_meta::before { display: none; } }
+@container (width < 53em) {
+/* Tablet: the artwork is drawn wider than the screen, so the crest sits right of centre and the curves aren't squashed */
+.hero_home_bg { height: 14rem; }
+.hero_home_aura { --aura-h: 85svh; --warm: 36% 26% at 70% 82%; --rose: 42% 46% at 100% 72%; --vio-top: 30% 26% at 94% 40%; --vio-left: 58% 32% at 14% 92%; --plum: 70% 22% at 50% 96%; --mask: 110% 80% at 70% 84%; }
+.hero_home_lines { left: -30%; width: 130%; }
+}
+@container (width < 42em) {
+.hero_home_bg { height: 12rem; bottom: calc(100% - 1rem); }
+.hero_home_aura { --aura-h: 92svh; --warm: 56% 19% at 64% 85%; --rose: 46% 32% at 106% 74%; --vio-top: 44% 40% at 108% 38%; --vio-left: 80% 22% at 4% 94%; --plum: 90% 16% at 50% 97%; --mask: 140% 80% at 70% 90%; }
+/* Phones: Selected clients closes the first screen and Earlier work starts the next, which leaves the horizon room */
+.hero_home_main { min-height: calc(100svh - var(--_spacing---section-space--page-top) - var(--_spacing---space--6) + 7.5rem); }
+.hero_home_lines { left: -62%; width: 164%; }
+/* Buttons stack on mobile, full width */
+.hero_home_actions { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: stretch; }
+.hero_home_actions > * { width: 100%; }
+.hero_home_founder { align-self: stretch; }
+.clients_marquee { -webkit-mask-image: linear-gradient(90deg, transparent, black 14%, black 86%, transparent); mask-image: linear-gradient(90deg, transparent, black 14%, black 86%, transparent); }
+.clients_item { font-size: 1.25rem; }
+.clients_list.is-earlier .clients_item { font-size: 1.0625rem; }
+}
+/* Motion keeps today's timings. Transform and opacity only. It pauses off screen (the site script adds is-offscreen)
+   and with the pause button. Reduced motion shows the settled frame, with no sparks. */
+@media (prefers-reduced-motion: no-preference) {
+.hero_home_aura.is-warm { transform-origin: 70% 85%; animation: hero-home-sun 9s ease-in-out infinite alternate; will-change: transform, opacity; }
+.hero_home_aura.is-cool { transform-origin: 30% 90%; animation: hero-home-drift 13s ease-in-out infinite alternate; will-change: transform; }
+.hero_home_lines { animation: hero-home-lines 11s ease-in-out infinite alternate; will-change: transform; }
+.hero_home_line { animation: hero-home-breathe 6s ease-in-out infinite alternate; }
+.hero_home_line.is-glow, .hero_home_line.is-1 { animation-duration: 7s; }
+.hero_home_line.is-2 { animation-duration: 5s; animation-delay: -2s; }
+.hero_home_line.is-3 { animation-duration: 8s; animation-delay: -5s; }
+.hero_home_line.is-4 { animation-duration: 6s; animation-delay: -1s; }
+.hero_home_line.is-5 { animation-duration: 9s; animation-delay: -4s; }
+.hero_home_line.is-6 { animation-duration: 7s; animation-delay: -6s; }
+.hero_home_spark { animation: hero-home-spark 7s cubic-bezier(.45,0,.25,1) infinite; }
+.hero_home_spark.is-2 { animation-duration: 9s; animation-delay: -3.5s; }
+.hero_home_spark.is-3 { animation-duration: 11s; animation-delay: -7s; }
+.hero_home_wrap.is-offscreen :is(.hero_home_aura, .hero_home_lines, .hero_home_line, .hero_home_spark), .hero_home_wrap:has(.clients_wrap.is-paused) :is(.hero_home_aura, .hero_home_lines, .hero_home_line, .hero_home_spark) { animation-play-state: paused; }
+/* The layers only grow and rise, never slide sideways, so their edges always stay off screen */
+@keyframes hero-home-sun { from { transform: translate3d(0, 2%, 0) scale(1); opacity: 0.8; } to { transform: translate3d(0, -2%, 0) scale(1.08); opacity: 1; } }
+@keyframes hero-home-drift { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(0, -3%, 0) scale(1.12); } }
+@keyframes hero-home-lines { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(0, 0.75rem, 0); } }
+@keyframes hero-home-breathe { from { opacity: calc(var(--o) * 0.3); } to { opacity: min(1, calc(var(--o) * 1.6)); } }
+@keyframes hero-home-spark { 0% { stroke-dashoffset: 70; opacity: 0; } 8% { opacity: 1; } 60% { opacity: 1; } 68% { stroke-dashoffset: -1000; opacity: 0; } 100% { stroke-dashoffset: -1000; opacity: 0; } }
+@keyframes clients-marquee { to { transform: translateX(-100%); } }
+.clients_list { animation: clients-marquee 26s linear infinite; }
+.clients_list.is-earlier { animation-duration: 34s; animation-direction: reverse; }
+/* Pointer over the logos pauses them */
+.clients_marquee:hover .clients_list { animation-play-state: paused; }
+}
+</style>
+<div class="hero_home_aura is-cool"></div>
+<div class="hero_home_aura is-warm"></div>
+<div class="hero_home_floor"></div>
+<svg class="hero_home_lines" viewBox="0 0 1000 300" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+<defs>
+<linearGradient id="hero-home-line" x1="0" y1="0" x2="1" y2="0">
+<stop class="hero_home_stop is-1" offset="0"></stop>
+<stop class="hero_home_stop is-2" offset="0.55"></stop>
+<stop class="hero_home_stop is-3" offset="1"></stop>
+</linearGradient>
+<linearGradient id="hero-home-ridge" x1="0" y1="0" x2="0" y2="1">
+<stop class="hero_home_stop is-ridge-top" offset="0.3"></stop>
+<stop class="hero_home_stop is-ridge-mid" offset="0.6"></stop>
+<stop class="hero_home_stop is-ridge-bottom" offset="1"></stop>
+</linearGradient>
+<filter id="hero-home-blur" x="-10%" y="-50%" width="120%" height="200%"><feGaussianBlur stdDeviation="4"></feGaussianBlur></filter>
+<filter id="hero-home-spark-glow" x="-20%" y="-200%" width="140%" height="500%"><feGaussianBlur stdDeviation="3" result="b"></feGaussianBlur><feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter>
+<path id="hero-home-r0" pathLength="1000" d="M0 262C37 260 153 258 220 252C287 246 347 239 400 228C453 217 500 202 540 186C580 170 612 146 640 132C668 118 685 107 705 100C725 93 742 89 760 88C778 87 795 88 815 92C835 96 859 107 880 114C901 121 920 130 940 136C960 142 990 149 1000 152"></path>
+<path id="hero-home-r1" pathLength="1000" d="M0 281C37 280 153 277 220 273C287 268 347 261 400 252C453 242 500 230 540 216C580 202 612 182 640 169C668 157 685 148 705 142C725 136 742 133 760 132C778 130 795 131 815 135C835 139 859 148 880 154C901 160 920 167 940 173C960 178 990 184 1000 187"></path>
+<path id="hero-home-r2" pathLength="1000" d="M0 300C37 299 153 297 220 293C287 289 347 284 400 276C453 268 500 257 540 246C580 234 612 217 640 207C668 196 685 189 705 184C725 178 742 176 760 175C778 174 795 175 815 178C835 181 859 189 880 194C901 199 920 205 940 210C960 214 990 219 1000 221"></path>
+<path id="hero-home-r3" pathLength="1000" d="M0 320C37 319 153 317 220 314C287 311 347 306 400 300C453 294 500 285 540 276C580 266 612 253 640 244C668 236 685 230 705 226C725 221 742 219 760 219C778 218 795 218 815 221C835 224 859 230 880 234C901 238 920 243 940 247C960 250 990 254 1000 256"></path>
+<path id="hero-home-r4" pathLength="1000" d="M0 339C37 338 153 337 220 334C287 332 347 329 400 324C453 319 500 312 540 305C580 298 612 288 640 282C668 275 685 271 705 268C725 264 742 263 760 262C778 262 795 262 815 264C835 266 859 270 880 274C901 277 920 281 940 283C960 286 990 289 1000 290"></path>
+<path id="hero-home-r5" pathLength="1000" d="M0 358C37 358 153 357 220 355C287 353 347 351 400 348C453 344 500 340 540 335C580 330 612 323 640 319C668 315 685 312 705 309C725 307 742 306 760 306C778 305 795 306 815 307C835 308 859 311 880 314C901 316 920 318 940 320C960 322 990 324 1000 325"></path>
+</defs>
+<path class="hero_home_ridge" d="M0 262C37 260 153 258 220 252C287 246 347 239 400 228C453 217 500 202 540 186C580 170 612 146 640 132C668 118 685 107 705 100C725 93 742 89 760 88C778 87 795 88 815 92C835 96 859 107 880 114C901 121 920 130 940 136C960 142 990 149 1000 152L1000 300L0 300Z"></path>
+<use class="hero_home_line is-glow" href="#hero-home-r0"></use>
+<use class="hero_home_line is-1" href="#hero-home-r0"></use>
+<use class="hero_home_line is-2" href="#hero-home-r1"></use>
+<use class="hero_home_line is-3" href="#hero-home-r2"></use>
+<use class="hero_home_line is-4" href="#hero-home-r3"></use>
+<use class="hero_home_line is-5" href="#hero-home-r4"></use>
+<use class="hero_home_line is-6" href="#hero-home-r5"></use>
+<use class="hero_home_spark is-1" href="#hero-home-r0"></use>
+<use class="hero_home_spark is-2" href="#hero-home-r2"></use>
+<use class="hero_home_spark is-3" href="#hero-home-r4"></use>
+</svg>
