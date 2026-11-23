@@ -306,14 +306,14 @@ void main(){
   c=ov(c,d<.4?seg(d,0.,.4,st(cVi,.8),st(cVi*.5+cDb*.5,.6)):seg(d,.4,.76,st(cVi*.5+cDb*.5,.6),vec4(0.)));
   float k=(1.+.04*(1.+sin(t*.698)))*(1.-.3*s);
   vec4 e=vec4(uW.xy*k,uW.z,uW.w+.03*sin(t*.349)+s*.2);
-  d=rd(p+w*1.5,e)+.1*n1+.04*n2;
+  d=rd(p+w*1.5,e)*.9+.06*n1+.03*n2;
   vec4 wm;
   if(d<.09)wm=seg(d,0.,.09,st(cLi,1.),st(cEm,1.));
   else if(d<.2)wm=seg(d,.09,.2,st(cEm,1.),st(mix(cEm,sunC,.6),1.));
   else if(d<.34)wm=seg(d,.2,.34,st(mix(cEm,sunC,.6),1.),st(sunC,1.));
   else if(d<.52)wm=seg(d,.34,.52,st(sunC,1.),st(sunC,.6));
   else wm=seg(d,.52,.74,st(sunC,.6),vec4(0.));
-  wm*=.9+.1*sin(t*.698);
+  wm*=.95+.05*sin(t*.698);
   c=ov(c,wm);
   float r1=smoothstep(.2,.75,sn(vec2(q.x*.7-t*.09,q.y*1.8+.5*sin(q.x*1.2+t*.21)))),
         r2=smoothstep(.3,.85,sn(vec2(q.x*.9+3.7-t*.07,q.y*1.4-1.9)));
