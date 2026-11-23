@@ -268,7 +268,7 @@ precision mediump float;
 uniform vec2 uR;
 uniform float uT, uS;
 uniform vec4 uW, uRo, uPl, uVt, uVl, uM;
-uniform vec3 cCr, cPe, cCo, cBr, cRo, cPl, cIn, cPw, cNv;
+uniform vec3 cLi, cEm, cBr, cVi, cDb, cNv;
 vec3 pm(vec3 x){return mod((x*34.+1.)*x,289.);}
 float sn(vec2 v){
   const vec4 C=vec4(.211324865405187,.366025403784439,-.577350269189626,.024390243902439);
@@ -293,32 +293,32 @@ void main(){
   vec2 fl=vec2(-t*.11,t*.025);
   float n1=sn(q+fl),n2=sn(q*1.7+vec2(5.2,1.3)+fl*1.3),n3=sn(q*.8+vec2(9.1,-t*.04)-fl*.6);
   vec2 w=vec2(n1,n2)*.035;
-  vec3 sunC=mix(cBr,cPl,s*.45);
+  vec3 sunC=mix(cBr,cVi,s*.4);
   vec4 c=vec4(0.);
   float d=rd(p+w*1.2,vec4(uVl.xy*(1.+.06*sin(t*.48)),uVl.zw))+.06*n3;
-  vec4 vl=seg(d,0.,.5,st(cIn,.8),st(cPw*.25+cNv*.75,.7));
-  c=ov(c,d<.5?vl:seg(d,.5,.78,st(cPw*.25+cNv*.75,.7),vec4(0.)));
+  vec4 vl=seg(d,0.,.5,st(cDb,.9),st(cVi*.3+cDb*.7,.6));
+  c=ov(c,d<.5?vl:seg(d,.5,.78,st(cVi*.3+cDb*.7,.6),vec4(0.)));
   d=rd(p-w,vec4(uVt.xy*(1.+.06*sin(t*.48+1.)),uVt.zw))+.05*n2;
-  c=ov(c,seg(d,0.,.72,st(cIn,.7),vec4(0.)));
+  c=ov(c,seg(d,0.,.72,st(cVi,.55),vec4(0.)));
   d=rd(p+w,uPl)+.05*n1;
-  c=ov(c,seg(d,0.,.75,st(cPl,.7),vec4(0.)));
+  c=ov(c,seg(d,0.,.75,st(cBr,.45),vec4(0.)));
   d=rd(p+vec2(w.y,w.x)*1.4,vec4(uRo.xy,uRo.zw+vec2(0.,.02*sin(t*.33))))+.08*n3;
-  c=ov(c,d<.4?seg(d,0.,.4,st(cRo,1.),st(cPl,.85)):seg(d,.4,.76,st(cPl,.85),vec4(0.)));
+  c=ov(c,d<.4?seg(d,0.,.4,st(cVi,.8),st(cVi*.5+cDb*.5,.6)):seg(d,.4,.76,st(cVi*.5+cDb*.5,.6),vec4(0.)));
   float k=(1.+.04*(1.+sin(t*.698)))*(1.-.3*s);
   vec4 e=vec4(uW.xy*k,uW.z,uW.w+.03*sin(t*.349)+s*.2);
   d=rd(p+w*1.5,e)+.1*n1+.04*n2;
   vec4 wm;
-  if(d<.09)wm=seg(d,0.,.09,st(cCr,1.),st(cPe,1.));
-  else if(d<.2)wm=seg(d,.09,.2,st(cPe,1.),st(cCo,1.));
-  else if(d<.34)wm=seg(d,.2,.34,st(cCo,1.),st(sunC,1.));
+  if(d<.09)wm=seg(d,0.,.09,st(cLi,1.),st(cEm,1.));
+  else if(d<.2)wm=seg(d,.09,.2,st(cEm,1.),st(mix(cEm,sunC,.6),1.));
+  else if(d<.34)wm=seg(d,.2,.34,st(mix(cEm,sunC,.6),1.),st(sunC,1.));
   else if(d<.52)wm=seg(d,.34,.52,st(sunC,1.),st(sunC,.6));
   else wm=seg(d,.52,.74,st(sunC,.6),vec4(0.));
   wm*=.9+.1*sin(t*.698);
   c=ov(c,wm);
   float r1=smoothstep(.2,.75,sn(vec2(q.x*.7-t*.09,q.y*1.8+.5*sin(q.x*1.2+t*.21)))),
         r2=smoothstep(.3,.85,sn(vec2(q.x*.9+3.7-t*.07,q.y*1.4-1.9)));
-  c.rgb=mix(c.rgb,cRo*c.a,r1*.32*c.a);
-  c.rgb=mix(c.rgb,mix(cIn,cPw,.35)*c.a,r2*(.25+.35*s)*c.a);
+  c.rgb=mix(c.rgb,cEm*c.a,r1*.3*c.a);
+  c.rgb=mix(c.rgb,cVi*c.a,r2*(.3+.35*s)*c.a);
   c*=clamp((.82-rd(p,uM))/.4,0.,1.);
   float g=fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233)))*43758.5453)-.5;
   gl_FragColor=c+vec4(vec3(g/255.),0.)*c.a;
@@ -376,18 +376,16 @@ function initHeroGl(scope) {
   gl.vertexAttribPointer(aLoc, 2, gl.FLOAT, false, 0, 0);
   const u = {};
   ["uR", "uT", "uS", "uW", "uRo", "uPl", "uVt", "uVl", "uM",
-   "cCr", "cPe", "cCo", "cBr", "cRo", "cPl", "cIn", "cPw", "cNv"].forEach(n => (u[n] = gl.getUniformLocation(prog, n)));
+   "cLi", "cEm", "cBr", "cVi", "cDb", "cNv"].forEach(n => (u[n] = gl.getUniformLocation(prog, n)));
 
   heroGlStyles();
   warm.after(canvas);
 
-  // Brand colours, read from the same variables the CSS layers use
+  // Brand glow colours only (brand rules): Linen core, Ember, Beacon, Violet, deep blue
   const colours = {
-    cCr: ["--_light-field---cream", "#fff6ea"], cPe: ["--_light-field---peach", "#ffd0a8"],
-    cCo: ["--_light-field---coral", "#ff8a5c"], cBr: ["--swatch--brand-500", "#ff6a3d"],
-    cRo: ["--_light-field---rose", "#f1c6e0"], cPl: ["--_light-field---plum", "#781c48"],
-    cIn: ["--_light-field---indigo", "#6e5ae6"], cPw: ["--_light-field---periwinkle", "#8fa9ff"],
-    cNv: ["--swatch--dark-900", "#0a0e22"]
+    cLi: ["--swatch--light-200", "#f2f1ec"], cEm: ["--swatch--ember", "#ffa27e"],
+    cBr: ["--swatch--brand-500", "#ff6a3d"], cVi: ["--swatch--violet", "#7b5cd6"],
+    cDb: ["--swatch--deep-blue", "#28346e"], cNv: ["--swatch--dark-900", "#0a0e22"]
   };
   const probe = document.createElement("i");
   probe.style.display = "none";

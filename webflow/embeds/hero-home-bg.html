@@ -1,6 +1,6 @@
 <style>
-/* Home hero, Horizon. The words sit on navy. Below and to the right, a bright sunset of Beacon, rose, plum and
-   violet rises behind the crest of the glowing lines, which run along the top of the client logos. This embed sits
+/* Home hero, Horizon. The words sit on navy. Below and to the right, a bright sunset of Beacon, Ember and
+   Violet rises behind the crest of the glowing lines, which run along the top of the client logos. This embed sits
    inside clients_wrap, so the colour always starts below the buttons on phones, whatever the screen height. */
 .hero_home_wrap { container-type: inline-size; }
 /* Grain over the hero, fading out at the bottom so there is no line where the hero meets Projects */
@@ -9,25 +9,26 @@
 .clients_wrap { position: relative; }
 /* The band the horizon is drawn in: full width, resting on the client logos, rising into the space below the buttons. */
 .hero_home_bg { position: absolute; z-index: -1; pointer-events: none; left: calc(50% - 50vw); width: 100vw; bottom: calc(100% - 1.5rem); height: clamp(15rem, 32svh, 20rem); }
-/* The sunset: two colour layers that drift at different speeds, so the light feels alive. The mask keeps the
+/* The sunset, in the brand glow colours only: Beacon and Ember warm, Violet and deep blue cool, with a Linen core.
+   Two colour layers that drift at different speeds, so the light feels alive. The mask keeps the
    colour away from the words. Sizes and positions change per screen size through the variables below. */
 .hero_home_aura { --aura-h: 100svh; --warm: 30% 34% at 77% 80%; --rose: 36% 70% at 100% 55%; --plum: 60% 32% at 52% 96%; --vio-top: 30% 38% at 88% 18%; --vio-left: 50% 44% at 20% 92%; --mask: 105% 105% at 76% 80%;
   position: absolute; left: 0; right: 0; bottom: 0; height: var(--aura-h); -webkit-mask-image: radial-gradient(var(--mask), #000 42%, transparent 82%); mask-image: radial-gradient(var(--mask), #000 42%, transparent 82%); }
-.hero_home_aura.is-warm { background-image: radial-gradient(var(--warm), var(--_light-field---cream) 0%, var(--_light-field---peach) 9%, var(--_light-field---coral) 20%, var(--swatch--brand-500) 34%, color-mix(in srgb, var(--swatch--brand-500) 60%, transparent) 52%, transparent 74%), radial-gradient(var(--rose), var(--_light-field---rose) 0%, color-mix(in srgb, var(--_light-field---plum) 85%, transparent) 40%, transparent 76%), radial-gradient(var(--plum), color-mix(in srgb, var(--_light-field---plum) 70%, transparent) 0%, transparent 75%); }
-.hero_home_aura.is-cool { background-image: radial-gradient(var(--vio-top), color-mix(in srgb, var(--_light-field---indigo) 70%, transparent) 0%, transparent 72%), radial-gradient(var(--vio-left), color-mix(in srgb, var(--_light-field---indigo) 80%, transparent) 0%, color-mix(in srgb, color-mix(in srgb, var(--_light-field---periwinkle) 25%, var(--swatch--dark-900)) 70%, transparent) 50%, transparent 78%); }
+.hero_home_aura.is-warm { background-image: radial-gradient(var(--warm), var(--swatch--light-200) 0%, var(--swatch--ember) 9%, color-mix(in srgb, var(--swatch--ember) 40%, var(--swatch--brand-500)) 20%, var(--swatch--brand-500) 34%, color-mix(in srgb, var(--swatch--brand-500) 60%, transparent) 52%, transparent 74%), radial-gradient(var(--rose), color-mix(in srgb, var(--swatch--violet) 80%, transparent) 0%, color-mix(in srgb, color-mix(in srgb, var(--swatch--violet) 50%, var(--swatch--deep-blue)) 60%, transparent) 40%, transparent 76%), radial-gradient(var(--plum), color-mix(in srgb, var(--swatch--brand-500) 45%, transparent) 0%, transparent 75%); }
+.hero_home_aura.is-cool { background-image: radial-gradient(var(--vio-top), color-mix(in srgb, var(--swatch--violet) 55%, transparent) 0%, transparent 72%), radial-gradient(var(--vio-left), color-mix(in srgb, var(--swatch--deep-blue) 90%, transparent) 0%, color-mix(in srgb, color-mix(in srgb, var(--swatch--violet) 30%, var(--swatch--deep-blue)) 60%, transparent) 50%, transparent 78%); }
 /* Navy floor under the colour, so it settles into the logos with no edge */
 .hero_home_floor { position: absolute; left: 0; right: 0; bottom: -4rem; height: 12rem; background-image: linear-gradient(to top, var(--swatch--dark-900) 6.5rem, transparent); }
 .hero_home_lines { position: absolute; top: 0; left: 0; width: 100%; max-width: none; height: 100%; -webkit-mask-image: linear-gradient(to bottom, #000 78%, transparent 100%); mask-image: linear-gradient(to bottom, #000 78%, transparent 100%); }
-.hero_home_stop.is-1 { stop-color: var(--_light-field---periwinkle); }
-.hero_home_stop.is-2 { stop-color: var(--_light-field---rose); }
-.hero_home_stop.is-3 { stop-color: var(--_light-field---apricot); }
+.hero_home_stop.is-1 { stop-color: var(--swatch--light-200); stop-opacity: 0.55; }
+.hero_home_stop.is-2 { stop-color: var(--swatch--light-200); }
+.hero_home_stop.is-3 { stop-color: var(--swatch--brand-500); }
 /* The ridge under the top line is navy, so the sun looks as if it is rising behind the hill */
 .hero_home_stop.is-ridge-top { stop-color: var(--swatch--dark-900); stop-opacity: 0.2; }
 .hero_home_stop.is-ridge-mid { stop-color: var(--swatch--dark-900); stop-opacity: 0.75; }
 .hero_home_stop.is-ridge-bottom { stop-color: var(--swatch--dark-900); stop-opacity: 1; }
 .hero_home_ridge { fill: url(#hero-home-ridge); }
 .hero_home_line { --o: 1; fill: none; stroke: url(#hero-home-line); stroke-width: 1.3; opacity: var(--o); }
-.hero_home_spark { fill: none; stroke: var(--_light-field---cream); stroke-width: 2.4; stroke-linecap: round; stroke-dasharray: 70 1930; stroke-dashoffset: 70; opacity: 0; filter: url(#hero-home-spark-glow); }
+.hero_home_spark { fill: none; stroke: var(--swatch--light-200); stroke-width: 2.4; stroke-linecap: round; stroke-dasharray: 70 1930; stroke-dashoffset: 70; opacity: 0; filter: url(#hero-home-spark-glow); }
 .hero_home_line.is-glow { --o: 0.7; stroke-width: 7; filter: url(#hero-home-blur); }
 .hero_home_line.is-1 { --o: 0.95; }
 .hero_home_line.is-2 { --o: 0.62; }
